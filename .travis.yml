@@ -32,7 +32,6 @@ install:
   - bundle config set --local deployment 'true'
   - |
     BUNDLE_WITHOUT=production \
-    BUNDLE_PATH=vendor/cache \
     bundler install --local
 
 before_script:
