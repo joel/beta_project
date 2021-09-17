@@ -22,6 +22,10 @@ git:
 services:
   - docker
 
+before_install:
+  - gem --version
+  - bundler --version
+
 install:
   - bundle config set --local deployment 'true'
   - |
