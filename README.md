@@ -18,7 +18,23 @@ bundle package --all-platforms
 
 * Configuration
 
+```
+bin/docker --help
+bin/docker setup
+```
+
+* Setup env
+
+```
+bin/redis start --publish
+bin/db start --publish
+ ```
+
 * Database creation
+
+```
+bin/rails db:setup
+```
 
 * Database initialization
 
