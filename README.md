@@ -39,7 +39,22 @@ bin/rails db:setup
 
 * Database initialization
 
+```
+bin/rails db:setup
+```
+
+* App Skeleton
+
+```
+bin/rails generate scaffold post name:string
+bin/rails db:migrate
+```
+
 * How to run the test suite
+
+```
+bin/rails test:db
+```
 
 * Services (job queues, cache servers, search engines, etc.)
 
