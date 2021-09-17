@@ -9,6 +9,13 @@ Things you may want to cover:
 
 * System dependencies
 
+```
+bundle lock --add-platform x86_64-linux Gemfile
+bundle install
+bundle cache --all
+bundle package --all-platforms
+```
+
 * Configuration
 
 * Database creation
