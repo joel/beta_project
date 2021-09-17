@@ -1,0 +1,71 @@
+dist: focal # Ubuntu 20.04 LTS
+language: ruby
+
+cache:
+  - apt
+  - bundler
+  - npm
+
+rvm:
+  - 3.0.0
+
+env:
+  global:
+    - SERVICE_NAME=dummy_project
+    - RUBYGEMS_VERSION=3.2.27
+    - ARG_COMPOSE_WAIT_VER=2.9.0
+    - DB_VERSION=5.7.33
+    - DB_PASSWORD=db_password
+    - NODE_VERSION=v14.17.2
+
+git:
+  depth: 1
+
+services:
+  - docker
+
+before_install:
+  - |
+    export SERVICE_NAME=dummy_project \
+    export RUBYGEMS_VERSION=3.2.27 \
+    export ARG_COMPOSE_WAIT_VER=2.9.0 \
+    export DB_VERSION=5.7.33 \
+    export DB_PASSWORD=db_password \
+    export NODE_VERSION=v14.17.2
+
+  - gem update --system ${RUBYGEMS_VERSION}
+  - nvm install ${NODE_VERSION}
+  - nvm use ${NODE_VERSION}
+
+install:
+  - bundle config set --local deployment 'true'
+  - bundler install --local
+
+before_script:
+  - |
+    docker run --rm --detach \
+      --env MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \
+      --network=host \
+      mysql:${DB_VERSION}
+
+  - |
+    docker build . \
+      --build-arg ARG_COMPOSE_WAIT_VER=${ARG_COMPOSE_WAIT_VER} \
+      --tag ${SERVICE_NAME}/wait:${ARG_COMPOSE_WAIT_VER} \
+      -f dockerfiles/Dockerfile.wait
+
+  - |
+    docker run --rm \
+      --env WAIT_HOSTS=127.0.0.1:3306 \
+      --network=host \
+      ${SERVICE_NAME}/wait:${ARG_COMPOSE_WAIT_VER}
+
+  - bin/rails db:setup
+
+  - bin/rails webpacker:install
+
+jobs:
+  include:
+    - stage: Application correctness
+      script: bin/rails test:db
+      name: Test suite
