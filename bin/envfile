@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+begin
+  raise LoadError if ENV['CI']
+
+  var_list = []
+
+  File.open('../.env.local', "r") do |env_file|
+    env_file.each do |line|
+      var, value = line.split("=")
+      ENV[var] = value
+      var_list << var
+    end
+  end
+
+  ENV.slice(*var_list).each do |k,v|
+    puts("#{k} => #{v}")
+  end
+rescue LoadError
+  puts(".env.local ignored!")
+end

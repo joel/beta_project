@@ -1,4 +1,7 @@
 #!/usr/bin/env ruby
+
+load File.expand_path('../envfile', __FILE__) unless ENV['CI']
+
 APP_ROOT = File.expand_path('..', __dir__)
 Dir.chdir(APP_ROOT) do
   begin
