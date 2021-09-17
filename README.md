@@ -11,6 +11,7 @@ Things you may want to cover:
 
 ```
 bundle lock --add-platform x86_64-linux Gemfile
+bundle config --local build.mysql2 "--with-ldflags=-L/usr/local/opt/openssl@1.1/lib --with-cppflags=-I/usr/local/opt/openssl@1.1/include"
 bundle install
 bundle cache --all
 bundle package --all-platforms
