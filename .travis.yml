@@ -15,6 +15,7 @@ env:
     - ARG_COMPOSE_WAIT_VER=2.9.0
     - DB_VERSION=5.7.33
     - DB_PASSWORD=db_password
+    - RUBYGEMS_VERSION=3.2.27
 
 git:
   depth: 1
@@ -23,8 +24,9 @@ services:
   - docker
 
 before_install:
-  - gem --version
-  - bundler --version
+  - gem update --system ${RUBYGEMS_VERSION}
+  - gem --version # 3.1.2
+  - bundler --version # 2.2.21
 
 install:
   - bundle config set --local deployment 'true'
