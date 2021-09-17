@@ -7,16 +7,14 @@ cache:
   - npm
 
 rvm:
-  - 3.0.0
+  - 2.7.1
 
 env:
   global:
-    - SERVICE_NAME=dummy_project
-    - RUBYGEMS_VERSION=3.2.27
+    - SERVICE_NAME=beta_project
     - ARG_COMPOSE_WAIT_VER=2.9.0
     - DB_VERSION=5.7.33
     - DB_PASSWORD=db_password
-    - NODE_VERSION=v14.17.2
 
 git:
   depth: 1
@@ -24,22 +22,12 @@ git:
 services:
   - docker
 
-before_install:
-  - |
-    export SERVICE_NAME=dummy_project \
-    export RUBYGEMS_VERSION=3.2.27 \
-    export ARG_COMPOSE_WAIT_VER=2.9.0 \
-    export DB_VERSION=5.7.33 \
-    export DB_PASSWORD=db_password \
-    export NODE_VERSION=v14.17.2
-
-  - gem update --system ${RUBYGEMS_VERSION}
-  - nvm install ${NODE_VERSION}
-  - nvm use ${NODE_VERSION}
-
 install:
   - bundle config set --local deployment 'true'
-  - bundler install --local
+  - |
+    BUNDLE_WITHOUT=production \
+    BUNDLE_PATH=vendor/cache \
+    bundler install --local
 
 before_script:
   - |
@@ -60,12 +48,14 @@ before_script:
       --network=host \
       ${SERVICE_NAME}/wait:${ARG_COMPOSE_WAIT_VER}
 
-  - bin/rails db:setup
-
-  - bin/rails webpacker:install
+  - |
+    CI=true \
+      bin/rails db:setup
 
 jobs:
   include:
     - stage: Application correctness
-      script: bin/rails test:db
+      script: |
+        CI=true \
+          bin/rails test:db
       name: Test suite
