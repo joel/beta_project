@@ -1,11 +1,4 @@
 dist: focal # Ubuntu 20.04 LTS
-language: ruby
-
-cache:
-  - apt
-
-rvm:
-  - 2.7.4
 
 env:
   global:
