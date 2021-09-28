@@ -66,10 +66,12 @@ before_script:
     --env DB_HOST=${APP_NAME}-db \
     --env RAILS_LOG_TO_STDOUT=true \
     --network ${APP_NAME}-bridge-docker-network \
-    ${APP_NAME}/app-ci:${VERSION} bash -c "bin/rails db:setup"
+  -t ${APP_NAME}/app-ci:${VERSION} /bin/bash
   
   - docker container ls
-
+  
+  - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:setup"
+  
   - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:version"
 
 jobs:
