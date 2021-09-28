@@ -11,11 +11,15 @@ rvm:
 
 env:
   global:
-    - SERVICE_NAME=beta_project
     - ARG_COMPOSE_WAIT_VER=2.9.0
     - DB_VERSION=5.7.33
     - DB_PASSWORD=db_password
-    - RUBYGEMS_VERSION=3.2.27
+    - ARG_RUBYGEMS_VERSION=3.2.27
+    - ARG_RUBY_VERSION=2.7.4
+    - ARG_APP_PATH=src
+    - APP_NAME=beta_project
+    - VERSION=0.1.0
+	
 
 git:
   depth: 1
@@ -23,35 +27,26 @@ git:
 services:
   - docker
 
-before_install:
-  - gem update --system ${RUBYGEMS_VERSION}
-  - gem --version # 3.1.2
-  - bundler --version # 2.2.21
-
-install:
-  - bundle config set --local deployment 'true'
-  - |
-    BUNDLE_WITHOUT=production \
-    bundler install --local
-
 before_script:
+  - docker network create ${APP_NAME}-bridge-docker-network
+  
   - |
     docker run --rm --detach \
       --env MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \
-      --network=host \
+      --network=${APP_NAME}-bridge-docker-network \
       mysql:${DB_VERSION}
 
   - |
     docker build . \
       --build-arg ARG_COMPOSE_WAIT_VER=${ARG_COMPOSE_WAIT_VER} \
-      --tag ${SERVICE_NAME}/wait:${ARG_COMPOSE_WAIT_VER} \
+      --tag ${APP_NAME}/wait:${ARG_COMPOSE_WAIT_VER} \
       -f dockerfiles/Dockerfile.wait
 
   - |
     docker run --rm \
       --env WAIT_HOSTS=127.0.0.1:3306 \
-      --network=host \
-      ${SERVICE_NAME}/wait:${ARG_COMPOSE_WAIT_VER}
+      --network=${APP_NAME}-bridge-docker-network \
+      ${APP_NAME}/wait:${ARG_COMPOSE_WAIT_VER}
 
   - |
     CI=true \
