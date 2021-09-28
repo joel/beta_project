@@ -57,7 +57,7 @@ before_script:
       -f dockerfiles/Dockerfile-ci
 
   - |
-    docker run \
+    docker run --detach \
     --name ${APP_NAME}-app-ci \
     --env DOCKER=true \
     --env CI=true \
