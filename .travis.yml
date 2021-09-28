@@ -17,6 +17,8 @@ git:
 services:
   - docker
 
+install: skip
+
 before_script:
   - docker network create ${APP_NAME}-bridge-docker-network
   
