@@ -29,17 +29,17 @@ before_script:
   
   - |
     docker run --rm --detach \
-	  --name ${APP_NAME}-db \
+    --name ${APP_NAME}-db \
       --env MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \
       --network=${APP_NAME}-bridge-docker-network \
       mysql:${DB_VERSION}
 
   - |
     docker run --rm --detach \
-	  --name ${APP_NAME}-redis \
+    --name ${APP_NAME}-redis \
       --network=${APP_NAME}-bridge-docker-network \
       redis:latest
-	  
+    
   - |
     docker build . \
       --build-arg ARG_COMPOSE_WAIT_VER=${ARG_COMPOSE_WAIT_VER} \
@@ -62,16 +62,16 @@ before_script:
       -f dockerfiles/Dockerfile-ci
 
   - |
-  	docker run --rm \
-	  --name ${APP_NAME}-app-ci \
-	  --env DOCKER=true \
-	  --env CI=true \
-	  --env REDIS_URL=redis://${APP_NAME}-redis:6379/1 \
-	  --env DB_PASSWORD=${DB_PASSWORD} \
-	  --env DB_HOST=${APP_NAME}-db \
-	  --env RAILS_LOG_TO_STDOUT=true \
-	  --network ${APP_NAME}-bridge-docker-network \
-	  ${APP_NAME}/app-ci:${VERSION} bash -c "bin/rails db:setup"
+    docker run --rm \
+    --name ${APP_NAME}-app-ci \
+    --env DOCKER=true \
+    --env CI=true \
+    --env REDIS_URL=redis://${APP_NAME}-redis:6379/1 \
+    --env DB_PASSWORD=${DB_PASSWORD} \
+    --env DB_HOST=${APP_NAME}-db \
+    --env RAILS_LOG_TO_STDOUT=true \
+    --network ${APP_NAME}-bridge-docker-network \
+    ${APP_NAME}/app-ci:${VERSION} bash -c "bin/rails db:setup"
 
   - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:version"
 
