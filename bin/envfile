@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 begin
-  raise LoadError if ENV['CI']
+  raise LoadError if ENV['CI'] || ENV['DOCKER'] || !File.exist?('.env.local')
 
   var_list = []
 
