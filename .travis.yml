@@ -67,7 +67,7 @@ before_script:
     --env RAILS_LOG_TO_STDOUT=true \
     --network ${APP_NAME}-bridge-docker-network \
     ${APP_NAME}/app-ci:${VERSION} bash -c "bin/rails db:setup"
-	
+  
   - docker container ls
 
   - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:version"
@@ -76,6 +76,6 @@ jobs:
   include:
     - stage: Application correctness
       script:
-	  	- docker container ls
-	  	- docker exec ${APP_NAME}-app-ci bash -c "bin/rails test:db"
+      - docker container ls
+      - docker exec ${APP_NAME}-app-ci bash -c "bin/rails test:db"
       name: Test suite
