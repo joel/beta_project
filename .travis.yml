@@ -1,21 +1,15 @@
 dist: focal # Ubuntu 20.04 LTS
-language: ruby
-
-cache:
-  - apt
-  - bundler
-  - npm
-
-rvm:
-  - 2.7.4
 
 env:
   global:
-    - SERVICE_NAME=beta_project
     - ARG_COMPOSE_WAIT_VER=2.9.0
     - DB_VERSION=5.7.33
     - DB_PASSWORD=db_password
-    - RUBYGEMS_VERSION=3.2.27
+    - ARG_RUBYGEMS_VERSION=3.2.27
+    - ARG_RUBY_VERSION=2.7.4
+    - ARG_APP_PATH=src
+    - APP_NAME=beta_project
+    - VERSION=0.1.0
 
 git:
   depth: 1
@@ -23,44 +17,70 @@ git:
 services:
   - docker
 
-before_install:
-  - gem update --system ${RUBYGEMS_VERSION}
-  - gem --version # 3.1.2
-  - bundler --version # 2.2.21
-
-install:
-  - bundle config set --local deployment 'true'
-  - |
-    BUNDLE_WITHOUT=production \
-    bundler install --local
+install: skip
 
 before_script:
+  - docker network create ${APP_NAME}-bridge-docker-network
+  
   - |
     docker run --rm --detach \
+    --name ${APP_NAME}-db \
       --env MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \
-      --network=host \
+      --network=${APP_NAME}-bridge-docker-network \
       mysql:${DB_VERSION}
 
   - |
+    docker run --rm --detach \
+    --name ${APP_NAME}-redis \
+      --network=${APP_NAME}-bridge-docker-network \
+      redis:latest
+    
+  - |
     docker build . \
       --build-arg ARG_COMPOSE_WAIT_VER=${ARG_COMPOSE_WAIT_VER} \
-      --tag ${SERVICE_NAME}/wait:${ARG_COMPOSE_WAIT_VER} \
-      -f dockerfiles/Dockerfile.wait
+      --tag ${APP_NAME}/wait:${ARG_COMPOSE_WAIT_VER} \
+      -f dockerfiles/Dockerfile-wait
 
   - |
     docker run --rm \
-      --env WAIT_HOSTS=127.0.0.1:3306 \
-      --network=host \
-      ${SERVICE_NAME}/wait:${ARG_COMPOSE_WAIT_VER}
+      --env WAIT_HOSTS=${APP_NAME}-db:3306,${APP_NAME}-redis:6379 \
+      --network=${APP_NAME}-bridge-docker-network \
+      ${APP_NAME}/wait:${ARG_COMPOSE_WAIT_VER}
 
   - |
-    CI=true \
-      bin/rails db:setup
+      docker build \
+      . \
+      --build-arg ARG_RUBYGEMS_VERSION=${ARG_RUBYGEMS_VERSION} \
+      --build-arg ARG_RUBY_VERSION=${ARG_RUBY_VERSION} \
+      --build-arg ARG_APP_PATH=${ARG_APP_PATH} \
+      --tag ${APP_NAME}/app-ci:${VERSION} \
+      -f dockerfiles/Dockerfile-ci
 
+  - |
+    docker run --detach \
+    --name ${APP_NAME}-app-ci \
+    --env DOCKER=true \
+    --env CI=true \
+    --env REDIS_URL=redis://${APP_NAME}-redis:6379/1 \
+    --env DB_PASSWORD=${DB_PASSWORD} \
+    --env DB_HOST=${APP_NAME}-db \
+    --env RAILS_LOG_TO_STDOUT=true \
+    --network ${APP_NAME}-bridge-docker-network \
+      -t ${APP_NAME}/app-ci:${VERSION} /bin/bash
+
+  - docker container ls
+
+  - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:setup"
+
+  - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:version"
+
+after_script:
+  - docker container kill ${APP_NAME}-app-ci
+  
 jobs:
   include:
     - stage: Application correctness
-      script: |
-        CI=true \
-          bin/rails test:db
+      script:
+      - docker container ls
+      - docker exec ${APP_NAME}-app-ci bash -c "bin/rails test:db"
       name: Test suite

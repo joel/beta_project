@@ -54,8 +54,6 @@ test:
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
 #
-production:
-  <<: *default
-  database: beta_project_production
-  username: beta_project
-  password: <%= ENV['beta_project_DATABASE_PASSWORD'] %>
+# production:
+#   <<: *default
+#   database: beta_project_production
