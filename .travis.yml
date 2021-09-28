@@ -74,6 +74,9 @@ before_script:
 
   - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:version"
 
+after_script:
+  - docker container kill ${APP_NAME}-app-ci
+  
 jobs:
   include:
     - stage: Application correctness
