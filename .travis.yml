@@ -3,8 +3,6 @@ language: ruby
 
 cache:
   - apt
-  - bundler
-  - npm
 
 rvm:
   - 2.7.4
@@ -19,7 +17,6 @@ env:
     - ARG_APP_PATH=src
     - APP_NAME=beta_project
     - VERSION=0.1.0
-	
 
 git:
   depth: 1
@@ -32,30 +29,54 @@ before_script:
   
   - |
     docker run --rm --detach \
+	  --name ${APP_NAME}-db \
       --env MYSQL_ROOT_PASSWORD=${DB_PASSWORD} \
       --network=${APP_NAME}-bridge-docker-network \
       mysql:${DB_VERSION}
 
   - |
+    docker run --rm --detach \
+	  --name ${APP_NAME}-redis \
+      --network=${APP_NAME}-bridge-docker-network \
+      redis:latest
+	  
+  - |
     docker build . \
       --build-arg ARG_COMPOSE_WAIT_VER=${ARG_COMPOSE_WAIT_VER} \
       --tag ${APP_NAME}/wait:${ARG_COMPOSE_WAIT_VER} \
-      -f dockerfiles/Dockerfile.wait
+      -f dockerfiles/Dockerfile-wait
 
   - |
     docker run --rm \
-      --env WAIT_HOSTS=127.0.0.1:3306 \
+      --env WAIT_HOSTS=${APP_NAME}-db:3306,${APP_NAME}-redis:6379 \
       --network=${APP_NAME}-bridge-docker-network \
       ${APP_NAME}/wait:${ARG_COMPOSE_WAIT_VER}
 
   - |
-    CI=true \
-      bin/rails db:setup
+      docker build \
+      . \
+      --build-arg ARG_RUBYGEMS_VERSION=${ARG_RUBYGEMS_VERSION} \
+      --build-arg ARG_RUBY_VERSION=${ARG_RUBY_VERSION} \
+      --build-arg ARG_APP_PATH=${ARG_APP_PATH} \
+      --tag ${APP_NAME}/app-ci:${VERSION} \
+      -f dockerfiles/Dockerfile-ci
+
+  - |
+  	docker run --rm \
+	  --name ${APP_NAME}-app-ci \
+	  --env DOCKER=true \
+	  --env CI=true \
+	  --env REDIS_URL=redis://${APP_NAME}-redis:6379/1 \
+	  --env DB_PASSWORD=${DB_PASSWORD} \
+	  --env DB_HOST=${APP_NAME}-db \
+	  --env RAILS_LOG_TO_STDOUT=true \
+	  --network ${APP_NAME}-bridge-docker-network \
+	  ${APP_NAME}/app-ci:${VERSION} bash -c "bin/rails db:setup"
+
+  - docker exec ${APP_NAME}-app-ci bash -c "bin/rails db:version"
 
 jobs:
   include:
     - stage: Application correctness
-      script: |
-        CI=true \
-          bin/rails test:db
+      script: docker exec ${APP_NAME}-app-ci bash -c "bin/rails test:db"
       name: Test suite
