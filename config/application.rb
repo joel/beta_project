@@ -15,14 +15,14 @@ module BundleLocalCacheTravisBetaTest
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
-    
+
     # Use the lowest log level to ensure availability of diagnostic information
     # when problems arise.
     config.log_level = :debug
 
     # Prepend all log lines with the following tags.
     config.log_tags = [ :request_id ]
-    
+
     # Use default logging formatter so that PID and timestamp are not suppressed.
     config.log_formatter = ::Logger::Formatter.new
 
@@ -35,6 +35,7 @@ module BundleLocalCacheTravisBetaTest
       logger.formatter = config.log_formatter
       config.logger    = ActiveSupport::TaggedLogging.new(logger)
     end
-    
+
+    config.active_record.schema_format = :sql
   end
 end
