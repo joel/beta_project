@@ -140,7 +140,7 @@ jobs:
             --env DB_USERNAME=root \
             --env CI=true \
             --network=${{ env.SERVICE_NAME }}-bridge-docker-network \
-            ${{ env.SERVICE_NAME }}/app-ci:${{ env.VERSION }} /bin/bash -c "bin/rails db:prepare"
+            ${{ env.SERVICE_NAME }}/app-ci:${{ env.VERSION }} /bin/bash -c "bin/rails db:setup"
 
       - name: Run Test
         run: |
