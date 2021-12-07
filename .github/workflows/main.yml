@@ -1,0 +1,153 @@
+name: Test Suite
+
+on: [push,pull_request]
+
+env:
+  SERVICE_NAME: beta_project
+  IMAGE_CACHE_DIR: /tmp/cache/docker-image
+  IMAGE_CACHE_KEY: docker-cache-image
+  DB_PASSWORD: db_password
+  DB_VERSION: 5.7.33
+  RUBY_VERSION: 2.7.4
+  VERSION: latest
+  COMPOSE_WAIT_VER: 2.9.0
+
+jobs:
+
+  image-build-and-cache:
+
+    runs-on: ubuntu-latest
+
+    outputs:
+      branch: ${{ steps.branch-commits.outputs.branch }}
+      sha: ${{ steps.branch-commits.outputs.sha_short }}
+
+    steps:
+      - name: Check Out Code
+        uses: actions/checkout@v2
+
+      - name: Get Current Branch and Commit
+        id: branch-commits
+        shell: bash
+        run: |
+          echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+          echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+
+      - name: Show Current Branch and Commit
+        run: |
+          echo "Branch: ${{ steps.branch-commits.outputs.branch }}"
+          echo "Sha: ${{ steps.branch-commits.outputs.sha_short }}"
+
+      - name: Create Cache Registry
+        id: cache-docker-images-code
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR }}/code
+          key: ${{ runner.os }}-docker-images-${{ steps.branch-commits.outputs.sha_short }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Build Docker Image from Source Code
+        if: steps.cache-docker-images-code.outputs.cache-hit != 'true'
+        run: |
+          docker build \
+            . \
+            --build-arg ARG_RUBY_VERSION=${RUBY_VERSION} \
+            --tag ${{ env.SERVICE_NAME }}/app-ci:latest \
+            -f dockerfiles/Dockerfile-ci
+          mkdir -p ${{ env.IMAGE_CACHE_DIR }}/code
+          docker save --output ${{ env.IMAGE_CACHE_DIR }}/code/image-app.tar ${{ env.SERVICE_NAME }}/app-ci:latest
+
+      - name: Create Cache Registry For Utilities
+        id: cache-docker-image-utilities
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR }}/utilities
+          key: ${{ runner.os }}-docker-images-${{ env.COMPOSE_WAIT_VER }}-${{ hashFiles('dockerfiles/Dockerfile-wait') }}
+
+      - name: Build Wait Image
+        if: steps.cache-docker-image-utilities.outputs.cache-hit != 'true'
+        run: |
+          docker build . \
+            --build-arg ARG_COMPOSE_WAIT_VER=${{ env.COMPOSE_WAIT_VER }} \
+            --tag ${{ env.SERVICE_NAME }}/wait:${{ env.COMPOSE_WAIT_VER }} \
+            -f dockerfiles/Dockerfile-wait
+          mkdir -p ${{ env.IMAGE_CACHE_DIR }}/utilities
+          docker save --output ${{ env.IMAGE_CACHE_DIR }}/utilities/image-wait.tar ${{ env.SERVICE_NAME }}/wait:${{ env.COMPOSE_WAIT_VER }}
+
+  test-app:
+
+    needs: image-build-and-cache
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Create Network
+        run: docker network create ${{ env.SERVICE_NAME }}-bridge-docker-network
+
+      - name: Start Db
+        run: |
+          docker run --rm --detach \
+            --name ${{ env.SERVICE_NAME }}-db \
+            --env MYSQL_ROOT_PASSWORD=${{ env.DB_PASSWORD }} \
+            --network=${{ env.SERVICE_NAME }}-bridge-docker-network \
+            mysql:${{ env.DB_VERSION }}
+
+      - name: Declare Cache Registry
+        id: cache-docker-images
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR }}/code
+          key: ${{ runner.os }}-docker-images-${{ needs.image-build-and-cache.outputs.sha }}
+
+      - name: Check Cache
+        run: |
+          ls -l ${{ env.IMAGE_CACHE_DIR }}
+
+      - name: Docker load
+        run: |
+          docker load --input ${{ env.IMAGE_CACHE_DIR }}/code/image-app.tar
+
+      - name: Declare Cache Registry For Utilities
+        id: cache-docker-image-utilities
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.IMAGE_CACHE_DIR }}/utilities
+          key: ${{ runner.os }}-docker-images-${{ env.COMPOSE_WAIT_VER }}-${{ hashFiles('dockerfiles/Dockerfile-wait') }}
+
+      - name: Docker load
+        run: |
+          docker load --input ${{ env.IMAGE_CACHE_DIR }}/utilities/image-wait.tar
+
+      - name: Run Wait Container
+        run: |
+          docker run --rm \
+            --env WAIT_HOSTS=${{ env.SERVICE_NAME }}-db:3306 \
+            --network=${{ env.SERVICE_NAME }}-bridge-docker-network \
+            ${{ env.SERVICE_NAME }}/wait:${{ env.COMPOSE_WAIT_VER }}
+
+      - name: Prepare Env
+        run: |
+          docker run --rm \
+            --env DB_HOST=${{ env.SERVICE_NAME }}-db \
+            --env DB_PORT=3306 \
+            --env DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            --env DB_USERNAME=root \
+            --env CI=true \
+            --network=${{ env.SERVICE_NAME }}-bridge-docker-network \
+            ${{ env.SERVICE_NAME }}/app-ci:${{ env.VERSION }} /bin/bash -c "bin/rails db:prepare"
+
+      - name: Run Test
+        run: |
+          docker run --rm \
+            --env DB_HOST=${{ env.SERVICE_NAME }}-db \
+            --env DB_PASSWORD=${{ env.DB_PASSWORD }} \
+            --env DB_USERNAME=root \
+            --env CI=true \
+            --network=${{ env.SERVICE_NAME }}-bridge-docker-network \
+            ${{ env.SERVICE_NAME }}/app-ci:${{ env.VERSION }} /bin/bash -c "bin/rails test"
