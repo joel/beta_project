@@ -41,6 +41,4 @@ RUN gem update --system
 RUN bundle config set --local deployment 'true'
 RUN bundler install --local
 
-RUN bin/rails webpacker:install
-
 CMD [ "echo", "CI Container [$RUBYGEMS_VERSION]" ]
