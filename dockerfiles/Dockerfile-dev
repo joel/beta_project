@@ -18,9 +18,11 @@ RUN apt-get update -qq && \
 SHELL ["/bin/bash", "-c"]
 
 ARG ARG_RUBYGEMS_VERSION
+ARG ARG_BUNDLER_VERSION
 ARG ARG_APP_PATH
 
 ENV RUBYGEMS_VERSION ${ARG_RUBYGEMS_VERSION}
+ENV BUNDLER_VERSION ${ARG_BUNDLER_VERSION}
 ENV APP_PATH ${ARG_APP_PATH}
 
 ENV BUNDLE_WITHOUT production
@@ -32,8 +34,9 @@ WORKDIR /${APP_PATH}
 COPY . /${APP_PATH}
 
 RUN gem update --system ${RUBYGEMS_VERSION}
+RUN gem install bundler -v ${BUNDLER_VERSION}
 
 RUN bundle config set --local deployment 'true'
-RUN bundler install --local
+RUN bundler install
 
 CMD [ "echo", "CI Container [$RUBYGEMS_VERSION]" ]

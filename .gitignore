@@ -36,3 +36,6 @@ bin/docker
 bin/redis-gui
 bin/redis
 bin/db
+bin/app
+bin/server
+bin/services

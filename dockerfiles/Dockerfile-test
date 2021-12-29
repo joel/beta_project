@@ -34,6 +34,6 @@ COPY . /${APP_PATH}
 RUN gem update --system ${RUBYGEMS_VERSION}
 
 RUN bundle config set --local deployment 'true'
-RUN bundler install --local
+RUN bundler install
 
 CMD [ "echo", "CI Container [$RUBYGEMS_VERSION]" ]
