@@ -2,6 +2,7 @@
 
 begin
   raise LoadError if ENV['CI']
+  raise LoadError unless File.exist?('./.env.local')
 
   var_list = []
 
