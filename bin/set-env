@@ -7,7 +7,7 @@ if [[ -f ./bin/docker-scripts/init-env ]]; then
   sed -i '' '/ARG_BUNDLER_VERSION/ s/2.3.3/2.2.27/' ./bin/docker-scripts/init-env
   sed -i '' '/ARG_RUBYGEMS_VERSION/ s/3.3.3/3.2.33/' ./bin/docker-scripts/init-env
   sed -i '' '/DB_VERSION/ s/latest/5.7.33/' ./bin/docker-scripts/init-env
-  sed -i '' '/BASENAME/ s/`basename "$CURRENT"`/"beta_project"/' ./bin/docker-scripts/init-env
+  sed -i '' '/BASENAME/ s/`basename "$CURRENT"`/"beta-project"/' ./bin/docker-scripts/init-env
 else
   echo "File [init-env] missing!"
   exit 1
