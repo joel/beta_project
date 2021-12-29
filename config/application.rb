@@ -31,6 +31,16 @@ module BundleLocalCacheTravisBetaTest
     # require 'syslog/logger'
     # config.logger = ActiveSupport::TaggedLogging.new(Syslog::Logger.new 'app-name')
 
+    config.autoload_paths << Rails.root.join('lib')
+
+    # paths = Rails::Paths::Root.new(Rails.root)
+
+    config.paths.add("lib", eager_load: true)
+    # config.paths.add("lib/baz", eager_load: true)
+    # config.paths.add("lib/foo", eager_load: true)
+
+    # config.eager_load_namespaces << Foo
+
     if ENV["RAILS_LOG_TO_STDOUT"].present?
       logger           = ActiveSupport::Logger.new(STDOUT)
       logger.formatter = config.log_formatter
