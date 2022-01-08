@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+source ./bin/docker-scripts/init-env
+
+export database_name="beta_project_development"
+export container_name="bundle_local_cache_travis_beta_test-db"
+
+echo "mysql -u ${DB_USER} -p${DB_PASSWORD} -e 'DROP DATABASE IF EXISTS ${database_name};'"
+
+docker exec \
+   --env DB_USER=${DB_USER} \
+   --env DB_PASSWORD=${DB_PASSWORD} \
+    ${container_name} bash -c "mysql -u ${DB_USER} -p${DB_PASSWORD} -e 'DROP DATABASE IF EXISTS ${database_name};'"
+
+echo "mysql -u ${DB_USER} -p${DB_PASSWORD} -e 'CREATE DATABASE IF NOT EXISTS ${database_name};'"
+
+docker exec \
+  --env DB_USER=${DB_USER} \
+  --env DB_PASSWORD=${DB_PASSWORD} \
+    ${container_name} bash -c "mysql -u ${DB_USER} -p${DB_PASSWORD} -e 'CREATE DATABASE IF NOT EXISTS ${database_name};'"
+
+echo "mysql -u ${DB_USER} -p${DB_PASSWORD} -e 'CREATE DATABASE IF NOT EXISTS ${database_name};'"
+
+cp -rfv db/structure.sql dumps/
+
+docker exec ${container_name} sh -c "mysql -u ${DB_USER} -p${DB_PASSWORD} ${database_name} < dumps/structure.sql"
