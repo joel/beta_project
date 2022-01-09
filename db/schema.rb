@@ -16,6 +16,7 @@ ActiveRecord::Schema.define(version: 2021_09_17_095639) do
   enable_extension "plpgsql"
 
   create_table "posts", force: :cascade do |t|
+    t.bigint "random_id"
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
