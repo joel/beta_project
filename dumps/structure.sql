@@ -39,38 +39,12 @@ CREATE TABLE public.posts (
 
 
 --
--- Name: posts_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.posts_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: posts_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.posts_id_seq OWNED BY public.posts.id;
-
-
---
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.schema_migrations (
     version character varying NOT NULL
 );
-
-
---
--- Name: posts id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.posts ALTER COLUMN id SET DEFAULT nextval('public.posts_id_seq'::regclass);
 
 
 --
@@ -103,8 +77,16 @@ ALTER TABLE ONLY public.schema_migrations
 
 SET search_path TO "$user", public;
 
-INSERT INTO "schema_migrations" (version) VALUES
-('20210917095639');
+CREATE OR REPLACE FUNCTION random_val() RETURNS integer
+AS $BODY$
+DECLARE
+  randInteger INT;
+BEGIN
+  SELECT (SELECT FLOOR(RANDOM() * 10 + 1)::INT) INTO randInteger;
+  RETURN randInteger;
+END;
+$BODY$
+LANGUAGE PLPGSQL;
 
 CREATE OR REPLACE FUNCTION next_id_val(tableName text) RETURNS integer
 AS $BODY$
@@ -116,15 +98,19 @@ BEGIN
   EXECUTE format('SELECT MAX(id) FROM %s', tableName)
   INTO lastId;
 
-  SELECT (SELECT FLOOR(RANDOM() * 10 + 1)::INT) INTO randInteger;
+  randInteger := random_val();
 
-  nextId := lastId + randInteger;
+  IF lastId IS NULL
+  THEN
+    nextId := randInteger;
+  ELSE
+    nextId := lastId + randInteger;
+  END IF;
 
   RETURN nextId;
 END;
 $BODY$
 LANGUAGE PLPGSQL;
-SELECT * FROM next_id_val('posts');
 
 CREATE OR REPLACE FUNCTION next_id_val_trigger()
   RETURNS TRIGGER
@@ -133,16 +119,18 @@ DECLARE
   tableName text;
 BEGIN
   tableName := TG_ARGV[0];
-  NEW.random_id = next_id_val(tableName);
+  NEW.id = next_id_val(tableName);
   RETURN NEW;
 END;
 $BODY$
 LANGUAGE PLPGSQL;
 
 DROP TRIGGER IF EXISTS next_post_id_val_trigger ON posts CASCADE;
-
 CREATE TRIGGER next_post_id_val_trigger
  BEFORE INSERT
   ON posts
   FOR EACH ROW
    EXECUTE PROCEDURE next_id_val_trigger('posts');
+
+INSERT INTO "schema_migrations" (version) VALUES
+('20210917095639');
