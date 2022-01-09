@@ -9,6 +9,47 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: next_id_val(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.next_id_val(tablename text) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  lastId INT;
+  randInteger INT;
+  nextId INT;
+BEGIN
+  EXECUTE format('SELECT MAX(id) FROM %s', tableName)
+  INTO lastId;
+
+  SELECT (SELECT FLOOR(RANDOM() * 10 + 1)::INT) INTO randInteger;
+
+  nextId := lastId + randInteger;
+
+  RETURN nextId;
+END;
+$$;
+
+
+--
+-- Name: next_id_val_trigger(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.next_id_val_trigger() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+  tableName text;
+BEGIN
+  tableName := TG_ARGV[0];
+  NEW.random_id = next_id_val(tableName);
+  RETURN NEW;
+END;
+$$;
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -95,6 +136,13 @@ ALTER TABLE ONLY public.posts
 
 ALTER TABLE ONLY public.schema_migrations
     ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: posts next_post_id_val_trigger; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER next_post_id_val_trigger BEFORE INSERT ON public.posts FOR EACH ROW EXECUTE FUNCTION public.next_id_val_trigger('posts');
 
 
 --
