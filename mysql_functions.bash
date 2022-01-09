@@ -29,7 +29,6 @@ SELECT random_integer(1,10);
 
 # Simple function to get the incremented next id + a random integer gap
 # ISSUE: table is not Dynamic, we can apply that function to whatever tables
-}
 DROP FUNCTION IF EXISTS next_random_sequence;
 DELIMITER //
 CREATE FUNCTION next_random_sequence ()
