@@ -41,6 +41,12 @@ docker exec \
   ${container_name} bash -c 'psql -d ${DATABASE_NAME} -U ${DB_USER} -f dumps/structure.sql'
 
 # docker exec \
+#   --env PGPASSWORD=postgres \
+#   -it bundle_local_cache_travis_beta_test-db bash
+#
+# psql -d beta_project_development -U postgres
+
+# docker exec \
 #   --env DB_USER=${DB_USER} \
 #   --env PGPASSWORD=${DB_PASSWORD} \
 #   --env DATABASE_NAME=${database_name} \
