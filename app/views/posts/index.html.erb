@@ -28,4 +28,6 @@
 
 <br>
 
+<%= render 'form', post: Post.new({ name: FFaker::Music.genre }) %>
+
 <%= link_to 'New Post', new_post_path %>
