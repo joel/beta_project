@@ -105,3 +105,44 @@ SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
 ('20210917095639');
+
+CREATE OR REPLACE FUNCTION next_id_val(tableName text) RETURNS integer
+AS $BODY$
+DECLARE
+  lastId INT;
+  randInteger INT;
+  nextId INT;
+BEGIN
+  EXECUTE format('SELECT MAX(id) FROM %s', tableName)
+  INTO lastId;
+
+  SELECT (SELECT FLOOR(RANDOM() * 10 + 1)::INT) INTO randInteger;
+
+  nextId := lastId + randInteger;
+
+  RETURN nextId;
+END;
+$BODY$
+LANGUAGE PLPGSQL;
+SELECT * FROM next_id_val('posts');
+
+CREATE OR REPLACE FUNCTION next_id_val_trigger()
+  RETURNS TRIGGER
+AS $BODY$
+DECLARE
+  tableName text;
+BEGIN
+  tableName := TG_ARGV[0];
+  NEW.random_id = next_id_val(tableName);
+  RETURN NEW;
+END;
+$BODY$
+LANGUAGE PLPGSQL;
+
+DROP TRIGGER IF EXISTS next_post_id_val_trigger ON posts CASCADE;
+
+CREATE TRIGGER next_post_id_val_trigger
+ BEFORE INSERT
+  ON posts
+  FOR EACH ROW
+   EXECUTE PROCEDURE next_id_val_trigger('posts');
