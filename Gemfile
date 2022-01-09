@@ -11,7 +11,7 @@ end
 gem 'rails', '~> 5.2.6'
 # Use mysql as the database for Active Record
 # bundle config --local build.mysql2 "--with-ldflags=-L/usr/local/opt/openssl@1.1/lib --with-cppflags=-I/usr/local/opt/openssl@1.1/include"
-gem 'mysql2', '~> 0.5'
+gem 'pg'
 # Use Puma as the app server
 gem 'puma', '~> 3.11'
 # Use SCSS for stylesheets
