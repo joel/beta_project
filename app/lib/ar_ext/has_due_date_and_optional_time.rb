@@ -37,7 +37,7 @@ module ArExt
   # => true
   #
   # t = Post.create!(name: "Foo", due_date: "1/4/2019", due_time: "7:30")
-
+  #
   # t.due_date
   # => Mon, 01 Apr 2019 07:30:00 BST +01:00
   # t.due_time
@@ -47,12 +47,14 @@ module ArExt
   #
   # Post.create!(name: "Foo", due_date: "", due_time: "7:30")
   # => Raises: ActiveRecord::RecordInvalid (Validation failed: Due date Please enter a date)
+  #
   module HasDueDateAndOptionalTime
 
     module MacroMethods
 
       def has_due_date_and_optional_time(opts = {})
-        # return if included_modules.include?(MacroMethods)
+
+        puts("[MacroMethods] => [#{included_modules.include?(MacroMethods)}]")
 
         class_attribute :date_attr, :time_attr, :switch_attr
 
@@ -68,13 +70,6 @@ module ArExt
 
         %w[Attributes Scopes Validations InstanceMethods].each do |mod_name|
           mod = "ArExt::HasDueDateAndOptionalTime::#{mod_name}".constantize
-
-          # include mod unless included_modules.include?(mod)
-          #
-          # mod = mod_name.constantize
-
-          puts("[#{mod}] => [#{included_modules.include?(mod)}]")
-
           include mod unless included_modules.include?(mod)
         end
       end
@@ -82,69 +77,39 @@ module ArExt
     end
 
     module Attributes
-
       def self.included(base)
         base.class_eval do
-
-          puts("[Attributes] => [#{included_modules.include?(Attributes)}]")
-
-          # return if included_modules.include?(Attributes)
-
-          # puts("[#{mod}] => [#{included_modules.include?(mod)}]")
-
           attr_accessor time_attr
-
         end
       end
-
     end
 
     module Scopes
-
       def self.included(base)
         base.class_eval do
-
-          puts("[Scopes] => [#{included_modules.include?(Scopes)}]")
-          # return if included_modules.include?(Scopes)
-
           scope :due_today, -> {
             current_time = Time.zone.now
             where("#{date_attr} BETWEEN ? AND ?", current_time.beginning_of_day, current_time.end_of_day)
           }
-
         end
       end
-
     end
 
     module Validations
-
       def self.included(base)
         base.class_eval do
-
-          puts("[Attributes] => [#{included_modules.include?(Attributes)}]")
-          # return if included_modules.include?(Validations)
-
           validate :"#{date_attr}_set_if_time_set"
           validate :"#{date_attr}_is_valid"
-
         end
       end
 
     end
 
     module InstanceMethods
-
       # Sets time on the date attr
       # If the date attr is not set write the time attr
-
       def self.included(base)
         base.class_eval do
-
-          # binding.irb
-
-          puts("[InstanceMethods] => [#{included_modules.include?(InstanceMethods)}]")
-          # return if included_modules.include?(InstanceMethods)
 
           define_method(:"#{time_attr}=") do |time_string|
             parsed_time = validate_time(time_string)
