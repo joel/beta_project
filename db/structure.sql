@@ -28,8 +28,10 @@ CREATE TABLE `posts` (
   `name` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
+  `due_date` datetime DEFAULT NULL,
+  `all_day` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `schema_migrations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -50,6 +52,8 @@ CREATE TABLE `schema_migrations` (
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 INSERT INTO `schema_migrations` (version) VALUES
-('20210917095639');
+('20210917095639'),
+('20220128184053'),
+('20220131112536');
 
 
