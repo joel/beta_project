@@ -37,7 +37,6 @@ module ArExt
   # => true
   #
   # t = Post.create!(name: "Foo", due_date: "1/4/2019", due_time: "7:30")
-  #
   # t.due_date
   # => Mon, 01 Apr 2019 07:30:00 BST +01:00
   # t.due_time
@@ -54,9 +53,9 @@ module ArExt
 
       def has_due_date_and_optional_time(opts = {})
 
-        puts("[MacroMethods] => [#{included_modules.include?(MacroMethods)}]")
-
-        class_attribute :date_attr, :time_attr, :switch_attr
+        thread_cattr_accessor :date_attr, instance_writer: false, instance_reader: true
+        thread_cattr_accessor :time_attr, instance_writer: false, instance_reader: true
+        thread_cattr_accessor :switch_attr, instance_writer: false, instance_reader: true
 
         attribute_names = opts.reverse_merge(
           date_attr: :due_date,
@@ -68,18 +67,9 @@ module ArExt
         self.time_attr   = attribute_names[:time_attr]
         self.switch_attr = attribute_names[:switch_attr]
 
-        %w[Attributes Scopes Validations InstanceMethods].each do |mod_name|
+        %w[Scopes Validations InstanceMethods].each do |mod_name|
           mod = "ArExt::HasDueDateAndOptionalTime::#{mod_name}".constantize
           include mod unless included_modules.include?(mod)
-        end
-      end
-
-    end
-
-    module Attributes
-      def self.included(base)
-        base.class_eval do
-          attr_accessor time_attr
         end
       end
     end
@@ -111,39 +101,51 @@ module ArExt
       def self.included(base)
         base.class_eval do
 
+          define_method(:"#{switch_attr}=") do |switch_attr_boolean|
+            warn StructuredWarnings::DeprecatedMethodWarning, "Set the flag all_day is deprecated, set [switch_attr] to nil instead" unless switch_attr_boolean.blank?
+
+            super(switch_attr_boolean)
+          end
+
           define_method(:"#{time_attr}=") do |time_string|
             parsed_time = validate_time(time_string)
+
             if parsed_time
-              send(:"#{switch_attr}=", false)
+              # Set the all_day flag to false if time is set
+              write_attribute(switch_attr, false)
+
               if send(date_attr)
                 write_attribute(date_attr, send(date_attr).change(hour: parsed_time.hour, min: parsed_time.min))
               else
+                # Not allow due_time to be set and due_date to be nil?
+                # We set the ivar that will be catch by the validation (obscur...)
                 instance_variable_set(:"@#{time_attr}", time_string)
               end
+
             elsif send(date_attr).blank?
-              instance_variable_set(:"@#{time_attr}", time_string)
+              # instance_variable_set(:"@#{time_attr}", time_string)
             else
-              send(:"#{switch_attr}=", true)
+              # Set the all_day flag to true if no time is set.
+              write_attribute(switch_attr, true)
               write_attribute(date_attr, send(date_attr).change(hour: 23, min: 59, sec: 59))
             end
           end
 
           # Return the time attr from the date attr if it is set
           # otherwise return the time attribute
-
           define_method(time_attr) do
             if send(date_attr).blank?
               instance_variable_get(:"@#{time_attr}")
             elsif !send(send(:switch_attr))
-              send(date_attr).strftime("%R")
+              send(date_attr).strftime("%R") # %R - 24-hour time (%H:%M)
             end
           end
 
           # Virtual date attribute writer, handles logic for setting the attribute
           define_method(:"#{date_attr}=") do |date|
-            if date.blank?
-              date = nil
-            elsif date.is_a?(String)
+            return if date.blank?
+
+            if date.is_a?(String)
               parsed_date = validate_date(date)
               if parsed_date
                 date = parsed_date
@@ -152,12 +154,14 @@ module ArExt
                 return false
               end
             end
+
             write_attribute(date_attr, date)
           end
 
           # Ensure date attr is assigned first, as it's needed by the #due_time=
           define_method :"attributes=" do |attrs|
             attrs_with_string_keys = attrs.stringify_keys
+
             if attrs_with_string_keys.key?(date_attr.to_s)
               send(:"#{date_attr}=", attrs_with_string_keys.delete(date_attr.to_s))
             end
@@ -168,6 +172,7 @@ module ArExt
           private
 
           define_method(:"#{date_attr}_set_if_time_set") do
+
             if instance_variable_get(:"@#{time_attr}").present? && read_attribute(date_attr).blank?
               errors.add(date_attr, "Please enter a date")
             end
@@ -182,16 +187,34 @@ module ArExt
 
       private
 
-      # Parse a date from a string (01/01/2014)
-      # If valid return DateTime variable
+      # Parse a date from a string (31/12/2029)
+      # Returns the TimeWithZone value or false if not valid date input
       def validate_date(date = nil)
         validate_datetime(date)
       end
 
+      # Parse a date from a string (31/12/2029 11:59)
+      # Returns the TimeWithZone value or false if not valid time input
       def validate_time(time = nil)
         validate_datetime(time, "%H:%M")
       end
 
+      # Params
+      # - datetime [String]
+      # - format [String]
+      # Returns [TimeWithZone]
+
+      # Private: Parse String representation of a DateTime
+      #
+      # datetime  - The String representation of a DateTime.
+      # format - The String of the DateTime format directives.
+      #
+      # Examples
+      #
+      #   validate_datetime(datetime = "31/12/2029", format = "%d/%m/%Y")
+      #   # => Mon, 31 Dec 2029 00:00:00 UTC +00:00
+      #
+      # Returns the TimeWithZone value or false if not valid date input
       def validate_datetime(datetime = nil, format = "%d/%m/%Y")
         return if datetime.blank?
 
