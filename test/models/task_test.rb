@@ -36,6 +36,7 @@ module HasDueDateHelper
 
         assert item.valid?
         assert_not_nil item.public_send(date_attr)
+        assert_equal "23/09/2014", item.public_send(date_attr).strftime("%d/%m/%Y")
 
         assert_equal 23, item.public_send(date_attr).hour
         assert_equal 59, item.public_send(date_attr).min
