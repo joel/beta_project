@@ -3,17 +3,15 @@
 module Timestamps
   class HasDueDate
 
-    attr_reader :date_attr, :time_attr, :switch_attr
+    attr_reader :errors
 
-    # TODO: Extract that in inputs object
-    # Assume for now valid inputs
-    def initialize(date_attr:, time_attr:, switch_attr:)
-      @date_attr   = date_attr
-      @time_attr   = time_attr
-      @switch_attr = switch_attr
-
-      @deadline_str = "#{date_attr} #{time_attr}"
-      @deadline = Time.zone.parse(@deadline_str) # Returns the TimeWithZone value
+    def initialize(input)
+      if input.valid?
+        deadline_str = "#{input.date_attr} #{input.time_attr}"
+        @deadline = Time.zone.parse(deadline_str) # Returns the TimeWithZone value
+      else
+        @errors = input.errors
+      end
     end
 
     def due_date
@@ -28,6 +26,10 @@ module Timestamps
       deadline.strftime("%H:%M") == "23:59"
     end
     alias all_day? all_day
+
+    def valid?
+      !@errors.present?
+    end
 
     private
 
