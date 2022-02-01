@@ -18,6 +18,10 @@ module BundleLocalCacheTravisBetaTest
     # Add additional load paths for your own custom dirs
     config.autoload_paths << Rails.root.join('app', 'services').to_s
     config.autoload_paths << Rails.root.join('app', 'services', 'concerns').to_s
+    config.autoload_paths << Rails.root.join('app', 'inputs').to_s
+    config.autoload_paths << Rails.root.join('app', 'inputs', 'concerns').to_s
+    config.autoload_paths << Rails.root.join('app', 'validators').to_s
+    config.autoload_paths << Rails.root.join('app', 'validators', 'concerns').to_s
 
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
