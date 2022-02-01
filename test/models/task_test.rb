@@ -41,6 +41,11 @@ module HasDueDateHelper
         assert_equal 23, item.public_send(date_attr).hour
         assert_equal 59, item.public_send(date_attr).min
         assert_equal 59, item.public_send(date_attr).sec
+
+
+        assert_equal "23:59", item.public_send(date_attr).strftime("%H:%M")
+
+        assert item.all_day
       end
 
 
