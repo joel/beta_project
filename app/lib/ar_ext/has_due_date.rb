@@ -69,11 +69,11 @@ module ArExt
             read_attribute(date_attr).strftime("%H:%M")
           end
 
-          # define_method(date_attr) do
-          #   return if read_attribute(date_attr).blank?
-          #
-          #   read_attribute(date_attr).strftime("%d/%m/%Y")
-          # end
+          define_method(switch_attr) do
+            return if read_attribute(date_attr).blank?
+
+            read_attribute(date_attr).strftime("%H:%M") == "23:59"
+          end
 
         end
       end
