@@ -2,6 +2,8 @@ require 'test_helper'
 
 module HasDueDateAndOptionalTimeHelper
 
+  # test_has_due_date_and_optional_time(Post, :due_date, :due_time)
+
   # We test this per model to ensure that there are no other interactions for
   # the model that interfere with this concern.
   def test_has_due_date_and_optional_time(model, date_attr, time_attr)
@@ -9,8 +11,18 @@ module HasDueDateAndOptionalTimeHelper
 
     context "due_date and time" do
 
-      should "not allow due_time to be set and due_date to be nil" do
+      should "not allow due_time to be set and due_date to be nil when created" do
         item = build_stubbed(model_name, date_attr => nil, time_attr => "22:00")
+        assert_not item.valid?
+        assert_includes item.errors, date_attr
+      end
+
+      should "not allow due_time to be set and due_date to be nil" do
+        item = build(model_name, date_attr => nil)
+        assert_nil item.public_send(date_attr)
+        item.save!
+
+        item.public_send("#{time_attr}=", "22:00")
         assert_not item.valid?
         assert_includes item.errors, date_attr
       end
@@ -19,6 +31,9 @@ module HasDueDateAndOptionalTimeHelper
         item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
         assert item.valid?
         assert_not_nil item.send(date_attr)
+        assert_equal 23, item.send(date_attr).hour
+        assert_equal 59, item.send(date_attr).min
+        assert_equal 59, item.send(date_attr).sec
       end
 
       should "set the end time to 23:59:59 if the due_time is not set" do
@@ -65,8 +80,11 @@ module HasDueDateAndOptionalTimeHelper
 
         should "not return the due_time if all_day flag set to true" do
           date = Time.zone.local(2014, 2, 3, 10, 0, 0)
-          item = build_stubbed(model_name, date_attr => date, all_day: true)
-          assert_nil item.send(time_attr)
+
+          assert_warn(StructuredWarnings::DeprecatedMethodWarning) do
+            item = build_stubbed(model_name, date_attr => date, all_day: true)
+            assert_nil item.send(time_attr)
+          end
         end
 
       end
