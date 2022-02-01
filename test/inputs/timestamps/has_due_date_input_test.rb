@@ -5,17 +5,17 @@ require 'test_helper'
 module Timestamps
   class HasDueDateInputTest < ActiveSupport::TestCase
 
+    setup do
+      @params = {
+        date_attr: "31/12/2029",
+        time_attr: nil,
+        switch_attr: nil
+      }
+    end
+
     context "validations" do
 
       context "date_attr" do
-
-        setup do
-          @params = {
-            date_attr: "31/12/2029",
-            time_attr: nil,
-            switch_attr: nil
-          }
-        end
 
         should "be valid" do
           assert HasDueDateInput.new(**@params).valid?
@@ -29,6 +29,22 @@ module Timestamps
 
       end
 
+    end
+
+    context "deprecation" do
+      context "switch_attr" do
+        should "warn the deprecation and set the value" do
+          assert_warn(StructuredWarnings::DeprecatedMethodWarning) do
+
+            input = HasDueDateInput.new(**@params)
+
+            assert_changes( -> { input.switch_attr }, "should set switch_attr value", from: nil, to: true) do
+              input.switch_attr = true
+            end
+
+          end
+        end
+      end
     end
 
   end
