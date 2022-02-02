@@ -18,12 +18,7 @@ module ArExt
 
         self.deadline_attributes = attribute_names
 
-        %w[Scopes].each do |mod_name|
-          mod = "ArExt::HasDueDate::#{mod_name}".constantize
-          include mod unless included_modules.include?(mod)
-        end
-
-        %w[Validations InstanceMethods].each do |mod_name|
+        %w[Scopes Validations InstanceMethods].each do |mod_name|
           mod = "ArExt::HasDueDate::#{mod_name}".constantize
           include mod unless included_modules.include?(mod)
         end
@@ -55,7 +50,6 @@ module ArExt
       extend ActiveSupport::Concern
 
       included do
-
         # ------------------------------------------------
         # -------------- P R E S E N T E R S -------------
         # ------------------------------------------------
@@ -81,6 +75,7 @@ module ArExt
           read_attribute(:deadline).strftime("%H:%M") == "23:59"
         end
 
+        # switch_attr: :all_day?
         define_method("#{deadline_attributes[:switch_attr]}?") do
           public_send(deadline_attributes[:switch_attr])
         end
@@ -89,7 +84,7 @@ module ArExt
         # -------------- P R E S E N T E R S -------------
         # ------------------------------------------------
 
-
+        # ************************************************
 
         # ------------------------------------------------
         # -------------- VIRTUAL ATTRIBUTES -------------
