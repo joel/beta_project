@@ -1,5 +1,5 @@
 class AddDueDateToTasks < ActiveRecord::Migration[5.2]
   def change
-    add_column :tasks, :due_date, :datetime
+    add_column :tasks, :deadline, :datetime
   end
 end
