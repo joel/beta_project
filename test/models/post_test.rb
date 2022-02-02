@@ -192,9 +192,5 @@ class PostTest < ActiveSupport::TestCase
 
   extend HasDueDateAndOptionalTimeHelper
 
-  # test "the truth" do
-  #   assert true
-  # end
-
   test_has_due_date_and_optional_time(Post, :due_date, :due_time)
 end
