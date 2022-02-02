@@ -14,7 +14,7 @@ module HasDueDateHelper
       should "not allow due_time to be set and due_date to be nil when created" do
         item = build(model_name)
 
-        item.assign_attributes(date_attr => nil, time_attr => "22:00", "title" => "A Random Title")
+        item.assign_attributes(date_attr: nil, time_attr: "22:00", title: "A Random Title")
 
         # NOTE: calling valid? clean the errors
         # NOTE: we got :date_attr instead of :due_date
@@ -23,9 +23,10 @@ module HasDueDateHelper
         # assert_not item.valid?
         # assert_includes item.errors.messages, date_attr
 
-        assert_equal({:date_attr=>["is required"]}, item.errors.messages)
+        # assert_equal({:date_attr=>["is required"]}, item.errors.messages)
 
         assert_not item.valid?
+        assert_equal({:date_attr=>["is required"]}, item.errors.messages)
       end
 
     #   should "not allow due_time to be set and due_date to be nil" do
