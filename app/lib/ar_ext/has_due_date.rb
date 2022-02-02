@@ -12,6 +12,8 @@ module ArExt
         thread_cattr_accessor :time_attr, instance_writer: false, instance_reader: true
         thread_cattr_accessor :switch_attr, instance_writer: false, instance_reader: true
 
+        # thread_cattr_accessor :has_due_date_values, instance_writer: false, instance_reader: true
+
         attribute_names = opts.reverse_merge(
           date_attr: :due_date,
           time_attr: :due_time,
@@ -27,7 +29,7 @@ module ArExt
           include mod unless included_modules.include?(mod)
         end
 
-        %w[IncludedInstanceMethods].each do |mod_name|
+        %w[Validations IncludedInstanceMethods].each do |mod_name|
           mod = "ArExt::HasDueDate::#{mod_name}".constantize
           include mod unless included_modules.include?(mod)
         end
@@ -69,6 +71,10 @@ module ArExt
             read_attribute(date_attr).strftime("%H:%M")
           end
 
+          define_method(:"#{time_attr}=") do |time_string|
+            instance_variable_set(:"@#{time_attr}", time_string)
+          end
+
           define_method(switch_attr) do
             return if read_attribute(date_attr).blank?
 
@@ -99,15 +105,27 @@ module ArExt
           def assign_attributes(new_attributes)
             attrs_with_string_keys = new_attributes.stringify_keys
 
+            # date_attr_value   = attrs_with_string_keys.delete(date_attr.to_s)
+            # time_attr_value   = attrs_with_string_keys.delete(time_attr.to_s)
+            # switch_attr_value = attrs_with_string_keys.delete(switch_attr.to_s)
+
             date_attr_value   = attrs_with_string_keys.delete(date_attr.to_s)
             time_attr_value   = attrs_with_string_keys.delete(time_attr.to_s)
             switch_attr_value = attrs_with_string_keys.delete(switch_attr.to_s)
+
+            public_send(:"#{time_attr}=", time_attr_value)
 
             input = Timestamps::HasDueDateInput.new(
               date_attr: date_attr_value,
               time_attr: time_attr_value,
               switch_attr: switch_attr_value,
             )
+
+            # @has_due_date_values = {
+            #   date_attr: date_attr_value,
+            #   time_attr: time_attr_value,
+            #   errors: nil,
+            # }
 
             # Make errors persistent, calling valid? clean up errors
             # Need to be part of the validation of the model itself
