@@ -14,7 +14,7 @@ module HasDueDateHelper
       should "not allow due_time to be set and due_date to be nil when created" do
         item = build_stubbed(model_name, date_attr => nil, time_attr => "22:00")
         assert_not item.valid?
-        assert_equal({:date_attr=>["is required"]}, item.errors.messages)
+        assert_equal({:date_attr=>["is required if time is passed"]}, item.errors.messages)
       end
 
       should "allow due_time to be nil if due_date is filled" do
