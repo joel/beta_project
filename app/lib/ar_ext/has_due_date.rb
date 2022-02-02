@@ -114,7 +114,6 @@ module ArExt
           # -------------- VIRTUAL ATTRIBUTES -------------
           # ------------------------------------------------
 
-
           def validate_has_due_date
             input = virtual_inputs
             self.errors.merge!(input.errors) unless input.valid?
@@ -123,7 +122,10 @@ module ArExt
           def set_due_date
             input = virtual_inputs
             return unless input.valid?
+
             service = Timestamps::HasDueDate.new(input)
+            return unless service.deadline # Do Not Override if Set
+
             write_attribute(:deadline, service.deadline)
           end
 
