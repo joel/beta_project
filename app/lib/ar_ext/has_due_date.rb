@@ -46,6 +46,7 @@ module ArExt
       def self.included(base)
         base.class_eval do
           validate :validate_has_due_date
+          after_validation :set_due_date
         end
       end
     end
@@ -90,35 +91,48 @@ module ArExt
           # ------------------------------------------------
 
           %i[date_attr time_attr].each do |virtual_attribute|
-            define_method("#{deadline_attributes[virtual_attribute]}_virtual=") do |value|
+            define_method("#{deadline_attributes[virtual_attribute]}=") do |value|
               instance_variable_set(:"@#{virtual_attribute}", value)
             end
-
-            # define_method("#{deadline_attributes[virtual_attribute]}_virtual") do
-            #   instance_variable_get(:"@#{virtual_attribute}")
-            # end
           end
 
-          define_method("#{deadline_attributes[:switch_attr]}_virtual=") do |value|
+          define_method("#{deadline_attributes[:switch_attr]}=") do |value|
             warn StructuredWarnings::DeprecatedMethodWarning, "Set the flag #{deadline_attributes[:switch_attr]} is deprecated, set #{deadline_attributes[:time_attr]}_virtual = nil instead"
 
-            public_send("#{deadline_attributes[:time_attr]}_virtual=", nil)
+            public_send("#{deadline_attributes[:time_attr]}=", nil)
+          end
+
+          private
+
+          %i[date_attr time_attr switch_attr].each do |virtual_attribute|
+            define_method("_#{deadline_attributes[virtual_attribute]}") do
+              instance_variable_get(:"@#{virtual_attribute}")
+            end
           end
 
           # ------------------------------------------------
           # -------------- VIRTUAL ATTRIBUTES -------------
           # ------------------------------------------------
 
-          private
 
           def validate_has_due_date
-            input = Timestamps::HasDueDateInput.new(
-              date_attr: deadline_attributes[:date_attr_virtual],
-              time_attr: deadline_attributes[:time_attr_virtual],
-              switch_attr: deadline_attributes[:switch_attr_virtual],
-            )
-
+            input = virtual_inputs
             self.errors.merge!(input.errors) unless input.valid?
+          end
+
+          def set_due_date
+            input = virtual_inputs
+            return unless input.valid?
+            service = Timestamps::HasDueDate.new(input)
+            write_attribute(:deadline, service.deadline)
+          end
+
+          def virtual_inputs
+            Timestamps::HasDueDateInput.new(
+              date_attr: send("_#{deadline_attributes[:date_attr]}"),
+              time_attr: send("_#{deadline_attributes[:time_attr]}"),
+              switch_attr: send("_#{deadline_attributes[:switch_attr]}"),
+            )
           end
 
         end
