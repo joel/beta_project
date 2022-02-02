@@ -34,6 +34,11 @@ class StringTimeValidatorTest < ActiveSupport::TestCase
         assert_equal({:time_attr=>["bad format [8h] should be HH:MM"]}, input.errors.messages)
       end
 
+      should "be optional" do
+        input = Validatable.new(@params.merge(time_attr: nil))
+        assert input.valid?
+      end
+
     end
 
   end
