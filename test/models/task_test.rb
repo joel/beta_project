@@ -14,7 +14,8 @@ module HasDueDateHelper
       should "not allow due_time to be set and due_date to be nil when created" do
         item = build(model_name)
 
-        item.assign_attributes(date_attr: nil, time_attr: "22:00", title: "A Random Title")
+        # item.assign_attributes(date_attr: nil, time_attr: "22:00", title: "A Random Title")
+        item.assign_attributes(due_date_virtual: nil, due_time_virtual: "22:00", title: "A Random Title")
 
         # NOTE: calling valid? clean the errors
         # NOTE: we got :date_attr instead of :due_date
