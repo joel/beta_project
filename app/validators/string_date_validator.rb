@@ -6,6 +6,12 @@ class StringDateValidator < ActiveModel::Validator
     value = record.date_attr
     attribute = :date_attr
 
+    # Required
+    unless value
+      record.errors.add(attribute, "is required")
+      return false
+    end
+
     unless value.is_a?(String)
       record.errors.add(attribute, "must be a String")
       return false
