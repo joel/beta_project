@@ -58,18 +58,21 @@ module ArExt
           # -------------- P R E S E N T E R S -------------
           # ------------------------------------------------
 
+          # date_attr: :due_date
           define_method(deadline_attributes[:date_attr]) do
             return if read_attribute(:deadline).blank?
 
             read_attribute(:deadline).strftime("%d/%m/%Y")
           end
 
+          # time_attr: :due_time
           define_method(deadline_attributes[:time_attr]) do
             return if read_attribute(:deadline).blank?
 
             read_attribute(:deadline).strftime("%H:%M")
           end
 
+          # switch_attr: :all_day
           define_method(deadline_attributes[:switch_attr]) do
             return if read_attribute(:deadline).blank?
 
@@ -86,7 +89,21 @@ module ArExt
           # -------------- VIRTUAL ATTRIBUTES -------------
           # ------------------------------------------------
 
-          attr_accessor :date_attr, :time_attr, :switch_attr
+          %i[date_attr time_attr].each do |virtual_attribute|
+            define_method("#{deadline_attributes[virtual_attribute]}_virtual=") do |value|
+              instance_variable_set(:"@#{virtual_attribute}", value)
+            end
+
+            # define_method("#{deadline_attributes[virtual_attribute]}_virtual") do
+            #   instance_variable_get(:"@#{virtual_attribute}")
+            # end
+          end
+
+          define_method("#{deadline_attributes[:switch_attr]}_virtual=") do |value|
+            warn StructuredWarnings::DeprecatedMethodWarning, "Set the flag #{deadline_attributes[:switch_attr]} is deprecated, set #{deadline_attributes[:time_attr]}_virtual = nil instead"
+
+            public_send("#{deadline_attributes[:time_attr]}_virtual=", nil)
+          end
 
           # ------------------------------------------------
           # -------------- VIRTUAL ATTRIBUTES -------------
@@ -96,9 +113,9 @@ module ArExt
 
           def validate_has_due_date
             input = Timestamps::HasDueDateInput.new(
-              date_attr: date_attr,
-              time_attr: time_attr,
-              switch_attr: switch_attr,
+              date_attr: deadline_attributes[:date_attr_virtual],
+              time_attr: deadline_attributes[:time_attr_virtual],
+              switch_attr: deadline_attributes[:switch_attr_virtual],
             )
 
             self.errors.merge!(input.errors) unless input.valid?
