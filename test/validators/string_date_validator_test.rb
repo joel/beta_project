@@ -13,7 +13,6 @@ class StringDateValidatorTest < ActiveSupport::TestCase
     validates_with StringDateValidator
   end
 
-
   context "validations" do
 
     context "date_attr" do
@@ -34,10 +33,9 @@ class StringDateValidatorTest < ActiveSupport::TestCase
         assert_equal({:date_attr=>["bad format [12/31/2029] should be DD/MM/YYYY"]}, input.errors.messages)
       end
 
-      should "be required" do
+      should "be optional" do
         input = Validatable.new(@params.merge(date_attr: nil))
-        assert_not input.valid?
-        assert_equal({:date_attr=>["is required"]}, input.errors.messages)
+        assert input.valid?
       end
 
     end
