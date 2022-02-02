@@ -36,7 +36,7 @@ module ArExt
         base.class_eval do
           scope :due_today, -> {
             current_time = Time.zone.now
-            where("#{date_attr} BETWEEN ? AND ?", current_time.beginning_of_day, current_time.end_of_day)
+            where("deadline BETWEEN ? AND ?", current_time.beginning_of_day, current_time.end_of_day)
           }
         end
       end
@@ -78,6 +78,10 @@ module ArExt
             return if read_attribute(:deadline).blank?
 
             read_attribute(:deadline).strftime("%H:%M") == "23:59"
+          end
+
+          define_method("#{deadline_attributes[:switch_attr]}?") do
+            public_send(deadline_attributes[:switch_attr])
           end
 
           # ------------------------------------------------
