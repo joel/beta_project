@@ -122,7 +122,7 @@ module ArExt
           input = virtual_inputs
           return unless input.valid?
 
-          service = Timestamps::HasDueDate.new(input)
+          service = Timestamps::HasDueDate.new(input: input).perform
           return unless service.deadline # Do Not Override if Set
 
           write_attribute(:deadline, service.deadline)
