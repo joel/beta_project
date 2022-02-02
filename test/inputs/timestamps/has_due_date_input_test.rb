@@ -29,6 +29,20 @@ module Timestamps
 
       end
 
+      context "time_attr" do
+
+        should "be valid" do
+          assert HasDueDateInput.new(**@params.merge(time_attr: "15:00")).valid?
+        end
+
+        should "not be valid" do
+          input = HasDueDateInput.new(**@params.merge(time_attr: "15:00", date_attr: nil))
+          assert_not input.valid?
+          assert_equal({:date_attr=>["is required if time is passed"]}, input.errors.messages)
+        end
+
+      end
+
     end
 
     context "deprecation" do
