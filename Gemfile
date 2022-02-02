@@ -66,6 +66,8 @@ group :test do
   gem 'chromedriver-helper'
   gem 'shoulda'
   gem 'timecop'
+  gem 'minitest-focus'
+  gem 'minitest-reporters'
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
