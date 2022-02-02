@@ -6,6 +6,8 @@ module Timestamps
     attr_reader :errors, :deadline
 
     def initialize(input)
+      return unless input.proceedable?
+
       if input.valid?
         unless input.time_attr
           deadline_str = "#{input.date_attr}"
