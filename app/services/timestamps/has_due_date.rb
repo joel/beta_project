@@ -3,10 +3,14 @@
 module Timestamps
   class HasDueDate
 
-    attr_reader :errors, :deadline
+    attr_reader :input, :deadline, :errors
 
-    def initialize(input)
-      return unless input.proceedable?
+    def initialize(input:)
+      @input = input
+    end
+
+    def perform
+      return self unless input.proceedable?
 
       if input.valid?
         unless input.time_attr
@@ -21,29 +25,8 @@ module Timestamps
       else
         @errors = input.errors
       end
-    end
 
-    def due_date
-      return unless deadline
-
-      deadline.strftime("%d/%m/%Y")
-    end
-
-    def due_time
-      return unless deadline
-
-      deadline.strftime("%H:%M")
-    end
-
-    def all_day
-      return unless deadline
-
-      deadline.strftime("%H:%M") == "23:59"
-    end
-    alias all_day? all_day
-
-    def valid?
-      @errors.any?
+      self
     end
 
   end
