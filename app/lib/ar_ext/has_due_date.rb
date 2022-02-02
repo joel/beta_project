@@ -54,7 +54,7 @@ module ArExt
     module Validations
       def self.included(base)
         base.class_eval do
-          validates :"#{date_attr}", presence: true
+          validate :validate_has_due_date
         end
       end
     end
@@ -73,6 +73,19 @@ module ArExt
             return if read_attribute(date_attr).blank?
 
             read_attribute(date_attr).strftime("%H:%M") == "23:59"
+          end
+
+          private
+
+          def validate_has_due_date
+
+            binding.irb
+          #
+          # define_method(:"#{date_attr}_set_if_time_set") do
+          #
+          #   if instance_variable_get(:"@#{time_attr}").present? && read_attribute(date_attr).blank?
+          #     errors.add(date_attr, "Please enter a date")
+          #   end
           end
 
         end
@@ -96,13 +109,22 @@ module ArExt
               switch_attr: switch_attr_value,
             )
 
-            service = Timestamps::HasDueDate.new(input)
+            # Make errors persistent, calling valid? clean up errors
+            # Need to be part of the validation of the model itself
+            unless input.valid?
+              self.errors.merge!(input.errors)
 
-            super(
-              attrs_with_string_keys.merge(
-                "#{date_attr}" => service.deadline
+              super(attrs_with_string_keys)
+            else
+              service = Timestamps::HasDueDate.new(input)
+
+              super(
+                attrs_with_string_keys.merge(
+                  "#{date_attr}" => service.deadline
+                )
               )
-            )
+            end
+
           end
 
         end
