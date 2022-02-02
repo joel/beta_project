@@ -69,13 +69,12 @@ module HasDueDateHelper
         assert item.valid?
       end
 
-      should "set the correct time on the due date" do
-        skip "for now"
 
-        item = build_stubbed(model_name, deadline: Time.zone.now)
+      should "set the correct time on the due date" do
+        item = build(model_name, deadline: Time.zone.local(2029, 12, 31, 18, 00, 00))
         assert item.valid?
-        assert_equal "14:00", item.deadline.strftime("%R")
-        assert_equal "14:00", item.send(date_attr)
+        assert_equal "18:00", item.deadline.strftime("%R")
+        assert_equal "31/12/2029", item.send(date_attr)
       end
 
       # context "due_time" do
