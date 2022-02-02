@@ -144,9 +144,8 @@ module HasDueDateHelper
     context "all_day?" do
 
       should "set the all_day flag to true if no time is set" do
-        skip "for now"
-
         item = model.new(date_attr => "23/09/2014", time_attr => nil)
+        item.valid?
         assert item.all_day?
       end
 
