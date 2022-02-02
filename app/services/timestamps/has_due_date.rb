@@ -41,7 +41,7 @@ module Timestamps
     alias all_day? all_day
 
     def valid?
-      !@errors.present?
+      @errors.any?
     end
 
   end
