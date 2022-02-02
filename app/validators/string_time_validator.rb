@@ -6,6 +6,11 @@ class StringTimeValidator < ActiveModel::Validator
     value = record.time_attr
     attribute = :time_attr
 
+    # Optional
+    unless value
+      return true
+    end
+
     unless value.is_a?(String)
       record.errors.add(attribute, "must be a String")
       return false
