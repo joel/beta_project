@@ -12,133 +12,101 @@ module HasDueDateHelper
     context "due_date and time" do
 
       should "not allow due_time to be set and due_date to be nil when created" do
-        item = build(model_name)
-
-        # item.assign_attributes(date_attr: nil, time_attr: "22:00", title: "A Random Title")
-        item.assign_attributes(due_date_virtual: nil, due_time_virtual: "22:00", title: "A Random Title")
-
-        # NOTE: calling valid? clean the errors
-        # NOTE: we got :date_attr instead of :due_date
-
-
-        # assert_not item.valid?
-        # assert_includes item.errors.messages, date_attr
-
-        # assert_equal({:date_attr=>["is required"]}, item.errors.messages)
-
+        item = build_stubbed(model_name, date_attr => nil, time_attr => "22:00")
         assert_not item.valid?
         assert_equal({:date_attr=>["is required"]}, item.errors.messages)
       end
 
-    #   should "not allow due_time to be set and due_date to be nil" do
-    #     item = build(model_name, date_attr => nil)
-    #     assert_nil item.public_send(date_attr)
-    #     item.save!
-    #
-    #     item.public_send("#{time_attr}=", "22:00")
-    #     assert_not item.valid?
-    #     assert_includes item.errors, date_attr
-    #   end
-    #
-
       should "allow due_time to be nil if due_date is filled" do
-        skip "for now"
-
-        # item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
-
-        item = build(model_name)
-
-        item.assign_attributes(date_attr => "23/09/2014", time_attr => nil)
-
+        item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
         assert item.valid?
-        assert_not_nil item.public_send(date_attr)
-        assert_equal "23/09/2014", item.public_send(date_attr).strftime("%d/%m/%Y")
+        assert_not_nil item.send(date_attr)
+      end
 
-        assert_equal 23, item.public_send(date_attr).hour
-        assert_equal 59, item.public_send(date_attr).min
-        assert_equal 59, item.public_send(date_attr).sec
-
-
-        assert_equal "23:59", item.public_send(date_attr).strftime("%H:%M")
-
+      should "set all_day if due_time is nil" do
+        item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
+        assert item.valid?
         assert item.all_day
       end
 
-
-      should "allow due_time to be nil if due_date is filled - 2" do
-        skip "for now"
-        # item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
-
-        item = build(model_name)
-
-        item.assign_attributes(date_attr => "23/09/2014", time_attr => "15:00")
-
+      should "set due_time to the end of the day if given due_time is nil" do
+        item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
         assert item.valid?
-        assert_not_nil item.public_send(date_attr)
+        assert_equal "23:59", item.public_send(time_attr)
 
-        # assert_equal 23, item.public_send(date_attr).hour
-        # assert_equal 59, item.public_send(date_attr).min
-        # assert_equal 59, item.public_send(date_attr).sec
-
-        assert_not_nil item.public_send(time_attr)
-        assert_equal "15:00", item.public_send(time_attr)
+        assert_equal 23, item.deadline.hour
+        assert_equal 59, item.deadline.min
+        assert_equal 59, item.deadline.sec
       end
 
+      should "set properly due_date and due_time" do
+        item = build(model_name, date_attr => "23/09/2014", time_attr => "15:00")
+        assert item.valid?
+        assert_equal "23/09/2014", item.public_send(date_attr)
+        assert_equal "15:00", item.public_send(time_attr)
+        assert_equal Time.zone.parse("23/09/2014d 15:00"), item.deadline
+      end
 
-    #
-    #   should "set the end time to 23:59:59 if the due_time is not set" do
-    #     item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
-    #     assert item.valid?
-    #     assert_equal Time.zone.local(2014, 9, 23, 23, 59, 59), item.send(date_attr)
-    #   end
-    #
-    #   should "not allow an invalid date" do
-    #     item = build_stubbed(model_name, date_attr => "I am not a date!", time_attr => "10:00")
-    #     assert_not item.valid?
-    #   end
-    #
-    #   should "save after due_date and due_time have been deleted" do
-    #     item = create(model_name, date_attr => Time.zone.now - 10, time_attr => "10:00")
-    #     item.send("#{date_attr}=", nil)
-    #     item.send("#{time_attr}=", nil)
-    #     item.save
-    #     assert item.valid?
-    #   end
-    #
-    #   should "set the correct time on the due date" do
-    #     item = build_stubbed(model_name, date_attr => Time.zone.now, time_attr => "14:00")
-    #     assert_equal "14:00", item.send(date_attr).strftime("%R")
-    #   end
-    #
-    #   context "due_time" do
-    #
-    #     should "return the due time from the due date when set" do
-    #       item = build_stubbed(model_name, date_attr => Time.zone.now)
-    #       assert_not_nil item.send(time_attr)
-    #     end
-    #
-    #     should "return nil when the due date is not set" do
-    #       item = build_stubbed(model_name, date_attr => nil)
-    #       assert_nil item.send(time_attr)
-    #     end
-    #
-    #     should "return the due_time if set and ignore the due_date time" do
-    #       date = Time.zone.local(2014, 2, 3, 10, 0, 0)
-    #       item = model.new(date_attr => date, time_attr => "20:00")
-    #       assert_equal "20:00", item.send(time_attr)
-    #     end
-    #
-    #     should "not return the due_time if all_day flag set to true" do
-    #       date = Time.zone.local(2014, 2, 3, 10, 0, 0)
-    #
-    #       assert_warn(StructuredWarnings::DeprecatedMethodWarning) do
-    #         item = build_stubbed(model_name, date_attr => date, all_day: true)
-    #         assert_nil item.send(time_attr)
-    #       end
-    #     end
-    #
-    #   end
-    #
+      should "set the end time to 23:59:59 if the due_time is not set" do
+        item = build(model_name, date_attr => "23/09/2014", time_attr => nil)
+        assert item.valid?
+        assert_equal Time.zone.local(2014, 9, 23, 23, 59, 59), item.deadline
+      end
+
+      should "not allow an invalid date" do
+        item = build_stubbed(model_name, date_attr => "I am not a date!", time_attr => "10:00")
+        assert_not item.valid?
+        assert_equal({:date_attr=>["bad format [I am not a date!] should be DD/MM/YYYY"]}, item.errors.messages)
+      end
+
+      should "save after due_date and due_time have been deleted" do
+        skip "for now"
+
+        item = create(model_name, date_attr => Time.zone.now - 10, time_attr => "10:00")
+        item.send("#{date_attr}=", nil)
+        item.send("#{time_attr}=", nil)
+        item.save
+        assert item.valid?
+      end
+
+      should "set the correct time on the due date" do
+        skip "for now"
+
+        item = build_stubbed(model_name, deadline: Time.zone.now)
+        assert item.valid?
+        assert_equal "14:00", item.deadline.strftime("%R")
+        assert_equal "14:00", item.send(date_attr)
+      end
+
+      # context "due_time" do
+      #
+      #   should "return the due time from the due date when set" do
+      #     item = build_stubbed(model_name, date_attr => Time.zone.now)
+      #     assert_not_nil item.send(time_attr)
+      #   end
+      #
+      #   should "return nil when the due date is not set" do
+      #     item = build_stubbed(model_name, date_attr => nil)
+      #     assert_nil item.send(time_attr)
+      #   end
+      #
+      #   should "return the due_time if set and ignore the due_date time" do
+      #     date = Time.zone.local(2014, 2, 3, 10, 0, 0)
+      #     item = model.new(date_attr => date, time_attr => "20:00")
+      #     assert_equal "20:00", item.send(time_attr)
+      #   end
+      #
+      #   should "not return the due_time if all_day flag set to true" do
+      #     date = Time.zone.local(2014, 2, 3, 10, 0, 0)
+      #
+      #     assert_warn(StructuredWarnings::DeprecatedMethodWarning) do
+      #       item = build_stubbed(model_name, date_attr => date, all_day: true)
+      #       assert_nil item.send(time_attr)
+      #     end
+      #   end
+      #
+      # end
+
     #   context "time zone" do
     #
     #     should "return different time when time zone changes" do
