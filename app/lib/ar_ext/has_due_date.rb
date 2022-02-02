@@ -8,11 +8,7 @@ module ArExt
 
       def has_due_date(opts = {})
 
-        thread_cattr_accessor :date_attr, instance_writer: false, instance_reader: true
-        thread_cattr_accessor :time_attr, instance_writer: false, instance_reader: true
-        thread_cattr_accessor :switch_attr, instance_writer: false, instance_reader: true
-
-        # thread_cattr_accessor :has_due_date_values, instance_writer: false, instance_reader: true
+        thread_cattr_accessor :deadline_attributes, instance_writer: false, instance_reader: true
 
         attribute_names = opts.reverse_merge(
           date_attr: :due_date,
@@ -20,23 +16,16 @@ module ArExt
           switch_attr: :all_day
         )
 
-        self.date_attr   = attribute_names[:date_attr]
-        self.time_attr   = attribute_names[:time_attr]
-        self.switch_attr = attribute_names[:switch_attr]
+        self.deadline_attributes = attribute_names
 
         %w[Scopes].each do |mod_name|
           mod = "ArExt::HasDueDate::#{mod_name}".constantize
           include mod unless included_modules.include?(mod)
         end
 
-        %w[Validations IncludedInstanceMethods].each do |mod_name|
+        %w[Validations InstanceMethods].each do |mod_name|
           mod = "ArExt::HasDueDate::#{mod_name}".constantize
           include mod unless included_modules.include?(mod)
-        end
-
-        %w[PrependedInstanceMethods].each do |mod_name|
-          mod = "ArExt::HasDueDate::#{mod_name}".constantize
-          prepend mod unless included_modules.include?(mod)
         end
 
       end
@@ -61,94 +50,62 @@ module ArExt
       end
     end
 
-    module IncludedInstanceMethods
+    module InstanceMethods
       def self.included(base)
         base.class_eval do
 
-          define_method(time_attr) do
-            return if read_attribute(date_attr).blank?
+          # ------------------------------------------------
+          # -------------- P R E S E N T E R S -------------
+          # ------------------------------------------------
 
-            read_attribute(date_attr).strftime("%H:%M")
+          define_method(deadline_attributes[:date_attr]) do
+            return if read_attribute(:deadline).blank?
+
+            read_attribute(:deadline).strftime("%d/%m/%Y")
           end
 
-          define_method(:"#{time_attr}=") do |time_string|
-            instance_variable_set(:"@#{time_attr}", time_string)
+          define_method(deadline_attributes[:time_attr]) do
+            return if read_attribute(:deadline).blank?
+
+            read_attribute(:deadline).strftime("%H:%M")
           end
 
-          define_method(switch_attr) do
-            return if read_attribute(date_attr).blank?
+          define_method(deadline_attributes[:switch_attr]) do
+            return if read_attribute(:deadline).blank?
 
-            read_attribute(date_attr).strftime("%H:%M") == "23:59"
+            read_attribute(:deadline).strftime("%H:%M") == "23:59"
           end
+
+          # ------------------------------------------------
+          # -------------- P R E S E N T E R S -------------
+          # ------------------------------------------------
+
+
+
+          # ------------------------------------------------
+          # -------------- VIRTUAL ATTRIBUTES -------------
+          # ------------------------------------------------
+
+          attr_accessor :date_attr, :time_attr, :switch_attr
+
+          # ------------------------------------------------
+          # -------------- VIRTUAL ATTRIBUTES -------------
+          # ------------------------------------------------
 
           private
 
           def validate_has_due_date
-
-            binding.irb
-          #
-          # define_method(:"#{date_attr}_set_if_time_set") do
-          #
-          #   if instance_variable_get(:"@#{time_attr}").present? && read_attribute(date_attr).blank?
-          #     errors.add(date_attr, "Please enter a date")
-          #   end
-          end
-
-        end
-      end
-    end
-
-    module PrependedInstanceMethods
-      def self.prepended(base)
-        base.class_eval do
-
-          def assign_attributes(new_attributes)
-            attrs_with_string_keys = new_attributes.stringify_keys
-
-            # date_attr_value   = attrs_with_string_keys.delete(date_attr.to_s)
-            # time_attr_value   = attrs_with_string_keys.delete(time_attr.to_s)
-            # switch_attr_value = attrs_with_string_keys.delete(switch_attr.to_s)
-
-            date_attr_value   = attrs_with_string_keys.delete(date_attr.to_s)
-            time_attr_value   = attrs_with_string_keys.delete(time_attr.to_s)
-            switch_attr_value = attrs_with_string_keys.delete(switch_attr.to_s)
-
-            public_send(:"#{time_attr}=", time_attr_value)
-
             input = Timestamps::HasDueDateInput.new(
-              date_attr: date_attr_value,
-              time_attr: time_attr_value,
-              switch_attr: switch_attr_value,
+              date_attr: date_attr,
+              time_attr: time_attr,
+              switch_attr: switch_attr,
             )
 
-            # @has_due_date_values = {
-            #   date_attr: date_attr_value,
-            #   time_attr: time_attr_value,
-            #   errors: nil,
-            # }
-
-            # Make errors persistent, calling valid? clean up errors
-            # Need to be part of the validation of the model itself
-            unless input.valid?
-              self.errors.merge!(input.errors)
-
-              super(attrs_with_string_keys)
-            else
-              service = Timestamps::HasDueDate.new(input)
-
-              super(
-                attrs_with_string_keys.merge(
-                  "#{date_attr}" => service.deadline
-                )
-              )
-            end
-
+            self.errors.merge!(input.errors) unless input.valid?
           end
 
         end
       end
-
     end
-
   end
 end
