@@ -19,8 +19,7 @@ module ArExt
         self.deadline_attributes = attribute_names
 
         %w[Scopes Validations InstanceMethods].each do |mod_name|
-          mod = "ArExt::HasDueDate::#{mod_name}".constantize
-          include mod unless included_modules.include?(mod)
+          include "ArExt::HasDueDate::#{mod_name}".constantize
         end
 
       end
