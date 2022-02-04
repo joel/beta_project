@@ -8,7 +8,8 @@ module ArExt
 
       def has_due_date(opts = {})
 
-        thread_cattr_accessor :deadline_attributes, instance_writer: false, instance_reader: true
+        # thread_cattr_accessor :deadline_attributes, instance_writer: false, instance_reader: true
+        class_attribute :deadline_attributes
 
         attribute_names = opts.reverse_merge(
           date_attr: :due_date,
