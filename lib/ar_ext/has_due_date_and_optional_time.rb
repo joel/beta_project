@@ -53,9 +53,13 @@ module ArExt
 
       def has_due_date_and_optional_time(opts = {})
 
-        thread_cattr_accessor :date_attr, instance_writer: false, instance_reader: true
-        thread_cattr_accessor :time_attr, instance_writer: false, instance_reader: true
-        thread_cattr_accessor :switch_attr, instance_writer: false, instance_reader: true
+        # thread_cattr_accessor :date_attr, instance_writer: false, instance_reader: true
+        # thread_cattr_accessor :time_attr, instance_writer: false, instance_reader: true
+        # thread_cattr_accessor :switch_attr, instance_writer: false, instance_reader: true
+
+        class_attribute :date_attr
+        class_attribute :time_attr
+        class_attribute :switch_attr
 
         attribute_names = opts.reverse_merge(
           date_attr: :due_date,

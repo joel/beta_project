@@ -23,6 +23,13 @@ module BundleLocalCacheTravisBetaTest
     config.autoload_paths << Rails.root.join('app', 'validators').to_s
     config.autoload_paths << Rails.root.join('app', 'validators', 'concerns').to_s
 
+    config.autoload_paths << Rails.root.join('lib')
+
+    # Otherwise directory outside of ./app are not autoloaded
+    # See railties/lib/rails/engine/configuration.rb
+    # => https://github.com/rails/rails/blob/dd5a49c14082b559355b1f4d8bc5b686e8f67e3f/railties/lib/rails/engine/configuration.rb#L38-L73
+    config.paths.add("lib", eager_load: true)
+
     # Settings in config/environments/* take precedence over those specified here.
     # Application configuration can go into files in config/initializers
     # -- all .rb files in that directory are automatically loaded after loading
