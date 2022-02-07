@@ -4,6 +4,30 @@ module ArExt
 
   module HasDueDate
 
+    class Configuration
+      attr_accessor :deadline_attribute
+
+      def initialize
+        self.deadline_attribute = {
+          date_attr: :due_date,
+          time_attr: :due_time,
+          switch_attr: :all_day
+        }
+      end
+    end
+
+    module Configure
+      attr_writer :configuration
+
+      def configuration
+        @configuration ||= Configuration.new
+      end
+
+      def configure
+        yield(configuration)
+      end
+    end
+
     module Scopes
       extend ActiveSupport::Concern
 
@@ -26,6 +50,8 @@ module ArExt
 
     module InstanceMethods
       extend ActiveSupport::Concern
+      include Scopes
+      include Validations
 
       included do
         # ------------------------------------------------
@@ -33,29 +59,29 @@ module ArExt
         # ------------------------------------------------
 
         # date_attr: :due_date
-        define_method(deadline_attributes[:date_attr]) do
+        define_method(self.configuration.deadline_attribute[:date_attr]) do
           return if read_attribute(:deadline).blank?
 
           read_attribute(:deadline).strftime("%d/%m/%Y")
         end
 
         # time_attr: :due_time
-        define_method(deadline_attributes[:time_attr]) do
+        define_method(self.configuration.deadline_attribute[:time_attr]) do
           return if read_attribute(:deadline).blank?
 
           read_attribute(:deadline).strftime("%H:%M")
         end
 
         # switch_attr: :all_day
-        define_method(deadline_attributes[:switch_attr]) do
+        define_method(self.configuration.deadline_attribute[:switch_attr]) do
           return if read_attribute(:deadline).blank?
 
           read_attribute(:deadline).strftime("%H:%M") == "23:59"
         end
 
         # switch_attr: :all_day?
-        define_method("#{deadline_attributes[:switch_attr]}?") do
-          public_send(deadline_attributes[:switch_attr])
+        define_method("#{self.configuration.deadline_attribute[:switch_attr]}?") do
+          public_send(self.configuration.deadline_attribute[:switch_attr])
         end
 
         # ------------------------------------------------
@@ -69,21 +95,21 @@ module ArExt
         # ------------------------------------------------
 
         %i[date_attr time_attr].each do |virtual_attribute|
-          define_method("#{deadline_attributes[virtual_attribute]}=") do |value|
+          define_method("#{self.configuration.deadline_attribute[virtual_attribute]}=") do |value|
             instance_variable_set(:"@#{virtual_attribute}", value)
           end
         end
 
-        define_method("#{deadline_attributes[:switch_attr]}=") do |value|
-          warn StructuredWarnings::DeprecatedMethodWarning, "Set the flag #{deadline_attributes[:switch_attr]} is deprecated, set #{deadline_attributes[:time_attr]}_virtual = nil instead"
+        define_method("#{self.configuration.deadline_attribute[:switch_attr]}=") do |value|
+          warn StructuredWarnings::DeprecatedMethodWarning, "Set the flag #{self.configuration.deadline_attribute[:switch_attr]} is deprecated, set #{self.configuration.deadline_attribute[:time_attr]}_virtual = nil instead"
 
-          public_send("#{deadline_attributes[:time_attr]}=", nil)
+          public_send("#{self.configuration.deadline_attribute[:time_attr]}=", nil)
         end
 
         private
 
         %i[date_attr time_attr switch_attr].each do |virtual_attribute|
-          define_method("_#{deadline_attributes[virtual_attribute]}") do
+          define_method("_#{self.configuration.deadline_attribute[virtual_attribute]}") do
             instance_variable_get(:"@#{virtual_attribute}")
           end
         end
@@ -109,31 +135,12 @@ module ArExt
 
         def virtual_inputs
           Timestamps::HasDueDateInput.new(
-            date_attr: send("_#{deadline_attributes[:date_attr]}"),
-            time_attr: send("_#{deadline_attributes[:time_attr]}"),
-            switch_attr: send("_#{deadline_attributes[:switch_attr]}"),
+            date_attr: send("_#{self.class.configuration.deadline_attribute[:date_attr]}"),
+            time_attr: send("_#{self.class.configuration.deadline_attribute[:time_attr]}"),
+            switch_attr: send("_#{self.class.configuration.deadline_attribute[:switch_attr]}"),
           )
         end
 
-      end
-    end
-
-    module MacroMethods
-      extend ActiveSupport::Concern
-      include Scopes
-      include Validations
-      include InstanceMethods
-
-      included do
-        class_attribute :deadline_attributes
-
-        attribute_names = opts.reverse_merge(
-          date_attr: :due_date,
-          time_attr: :due_time,
-          switch_attr: :all_day
-        )
-
-        self.deadline_attributes = attribute_names
       end
     end
 

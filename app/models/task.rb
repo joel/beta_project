@@ -1,4 +1,5 @@
 class Task < ApplicationRecord
-  extend ArExt::HasDueDate::MacroMethods
+  extend ArExt::HasDueDate::Configure
+  include ArExt::HasDueDate::InstanceMethods
 
 end

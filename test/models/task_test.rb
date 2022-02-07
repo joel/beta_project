@@ -187,6 +187,10 @@ module HasDueDateHelper
 
 end
 
+Task.configure do |config|
+  config.deadline_attribute = config.deadline_attribute.reverse_merge({ time_attr: :timesup })
+end
+
 class TaskTest < ActiveSupport::TestCase
   extend HasDueDateHelper
 
