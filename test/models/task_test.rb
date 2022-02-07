@@ -190,5 +190,4 @@ end
 class TaskTest < ActiveSupport::TestCase
   extend HasDueDateHelper
 
-  test_has_due_date(Task, :due_date, :due_time)
 end

@@ -4,28 +4,6 @@ module ArExt
 
   module HasDueDate
 
-    module MacroMethods
-
-      def has_due_date(opts = {})
-
-        # thread_cattr_accessor :deadline_attributes, instance_writer: false, instance_reader: true
-        class_attribute :deadline_attributes
-
-        attribute_names = opts.reverse_merge(
-          date_attr: :due_date,
-          time_attr: :due_time,
-          switch_attr: :all_day
-        )
-
-        self.deadline_attributes = attribute_names
-
-        %w[Scopes Validations InstanceMethods].each do |mod_name|
-          include "ArExt::HasDueDate::#{mod_name}".constantize
-        end
-
-      end
-    end
-
     module Scopes
       extend ActiveSupport::Concern
 
@@ -139,5 +117,25 @@ module ArExt
 
       end
     end
+
+    module MacroMethods
+      extend ActiveSupport::Concern
+      include Scopes
+      include Validations
+      include InstanceMethods
+
+      included do
+        class_attribute :deadline_attributes
+
+        attribute_names = opts.reverse_merge(
+          date_attr: :due_date,
+          time_attr: :due_time,
+          switch_attr: :all_day
+        )
+
+        self.deadline_attributes = attribute_names
+      end
+    end
+
   end
 end
