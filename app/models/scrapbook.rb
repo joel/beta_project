@@ -1,0 +1,2 @@
+class Scrapbook < ApplicationRecord
+end
