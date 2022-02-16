@@ -40,11 +40,24 @@ class FooTest < ActiveSupport::TestCase
   end
 
   test "descendants" do
-    # binding.irb
-    # ApplicationRecord.descendants
-    # ApplicationRecord.descendants.map(&:name)
-    # => ["FooTest::Test::Anonymous", "FooTest::Test::ActsAsFoo", "Post"]
+    Test::Anonymous
+    Test::ActsAsFoo
 
+    assert_equal ["FooTest::Test::Anonymous", "FooTest::Test::ActsAsFoo", "Post"], ApplicationRecord.descendants.map(&:name)
 
+    Page
+    assert_equal ["FooTest::Test::Anonymous", "FooTest::Test::ActsAsFoo", "Post", "Page"], ApplicationRecord.descendants.map(&:name)
   end
+
+  test "list by ability" do
+    Test::Anonymous
+    Test::ActsAsFoo
+    Page
+
+    assert_equal ["FooTest::Test::ActsAsFoo"], ApplicationRecord.descendants.filter(&:acts_as_foo?).map(&:name)
+
+    Scrapbook
+    assert_equal ["FooTest::Test::ActsAsFoo", "Scrapbook"], ApplicationRecord.descendants.filter(&:acts_as_foo?).map(&:name)
+  end
+
 end
