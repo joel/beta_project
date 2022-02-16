@@ -1,2 +1,2 @@
-class Scrapbook < ApplicationRecord
+class Scrapbook < Page
 end

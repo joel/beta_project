@@ -1,2 +1,2 @@
-class Page < ApplicationRecord
+class Page < Post
 end

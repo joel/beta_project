@@ -16,14 +16,12 @@ class FooTest < ActiveSupport::TestCase
   module Test
 
     class Anonymous < ApplicationRecord
-      extend FooAbility::MacroMethods
 
       self.table_name = "anonymous"
 
     end
 
     class ActsAsFoo < ApplicationRecord
-      extend FooAbility::MacroMethods
 
       self.table_name = "acts_as_foo_models"
 
@@ -45,6 +43,8 @@ class FooTest < ActiveSupport::TestCase
     # binding.irb
     # ApplicationRecord.descendants
     # ApplicationRecord.descendants.map(&:name)
-    # => ["Post", "Foo"]
+    # => ["FooTest::Test::Anonymous", "FooTest::Test::ActsAsFoo", "Post"]
+
+
   end
 end
