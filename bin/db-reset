@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+source ./bin/docker-scripts/init-env
+
+export database_name="beta_project_development"
+export container_name="bundle_local_cache_travis_beta_test-db"
+export PGPASSWORD=${DB_PASSWORD}
+
+docker exec \
+  --env PGPASSWORD=${DB_PASSWORD} \
+  ${container_name} bash -c 'echo "postgres password: ${PGPASSWORD}"'
+
+docker exec \
+  --env DB_USER=${DB_USER} \
+  --env PGPASSWORD=${DB_PASSWORD} \
+  --env DATABASE_NAME=${database_name} \
+  ${container_name} bash -c 'psql -U ${DB_USER} -c "DROP DATABASE IF EXISTS ${DATABASE_NAME};"'
+
+docker exec \
+  --env DB_USER=${DB_USER} \
+  --env PGPASSWORD=${DB_PASSWORD} \
+  ${container_name} bash -c 'psql -U ${DB_USER} -c "SELECT datname FROM pg_database;"'
+
+docker exec \
+  --env DB_USER=${DB_USER} \
+  --env PGPASSWORD=${DB_PASSWORD} \
+  --env DATABASE_NAME=${database_name} \
+  ${container_name} bash -c 'psql -U ${DB_USER} -c "CREATE DATABASE ${DATABASE_NAME};"'
+
+docker exec \
+  --env DB_USER=${DB_USER} \
+  --env PGPASSWORD=${DB_PASSWORD} \
+  ${container_name} bash -c 'psql -U ${DB_USER} -c "SELECT datname FROM pg_database;"'
+
+mkdir -p dumps && cp -rfv db/structure.sql dumps/
+
+docker exec \
+  --env DB_USER=${DB_USER} \
+  --env PGPASSWORD=${DB_PASSWORD} \
+  --env DATABASE_NAME=${database_name} \
+  ${container_name} bash -c 'psql -d ${DATABASE_NAME} -U ${DB_USER} -f dumps/structure.sql'
+
+# docker exec \
+#   --env PGPASSWORD=postgres \
+#   -it bundle_local_cache_travis_beta_test-db bash
+#
+# psql -d beta_project_development -U postgres
+
+# docker exec \
+#   --env DB_USER=${DB_USER} \
+#   --env PGPASSWORD=${DB_PASSWORD} \
+#   --env DATABASE_NAME=${database_name} \
+#   ${container_name} bash -c 'pg_dump -U ${DB_USER} -F c -v -f dumps/structure.postgres.sql.dump ${DATABASE_NAME}'
+
+# docker exec \
+#   --env DB_USER=${DB_USER} \
+#   --env PGPASSWORD=${DB_PASSWORD} \
+#   --env DATABASE_NAME=${database_name} \
+#   ${container_name} bash -c 'pg_restore -d ${DATABASE_NAME} -U ${DB_USER} -C dumps/structure.sql'
